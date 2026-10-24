@@ -352,6 +352,62 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-col.p-over{border-color:var(--sc,var(--accent));background:var(--soft)}
 .p-ghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(2deg) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:.95}
 #pf .p-empty{font-size:12.5px;color:var(--muted);padding:8px 4px}
+
+#pf .inv-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 18px}
+#pf .inv-k{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+#pf .inv-k span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#pf .inv-k b{display:block;font-family:var(--mono);font-weight:500;font-size:20px;margin-top:4px}
+#pf .inv-filter{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 10px}
+#pf .inv-filter button{font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--soft);border:1px solid transparent;border-radius:999px;padding:6px 12px;cursor:pointer}
+#pf .inv-filter button[aria-pressed="true"]{color:var(--ink);border-color:var(--line);background:var(--surface)}
+#pf .inv-row{display:grid;grid-template-columns:86px minmax(0,1fr) 110px 92px 28px;gap:10px;align-items:center;padding:11px 4px;border-top:1px solid var(--line);cursor:pointer}
+#pf .inv-row:first-child{border-top:0}
+#pf .inv-row:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+#pf .inv-no{font-family:var(--mono);font-size:13px;color:var(--muted)}
+#pf .inv-cl{min-width:0}
+#pf .inv-cl b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pf .inv-cl small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pf .inv-amt{font-family:var(--mono);text-align:right;font-size:14px}
+#pf .inv-st{font-size:11px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:999px;padding:4px 8px;border:1px solid var(--line);color:var(--muted)}
+#pf .inv-st.paid{color:var(--paid);border-color:color-mix(in srgb,var(--paid) 45%,transparent)}
+#pf .inv-st.sent{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+#pf .inv-st.over{color:var(--unpaid);border-color:color-mix(in srgb,var(--unpaid) 45%,transparent)}
+#pf .inv-ed{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin:0 0 6px}
+#pf .inv-ed h3{margin:0;font-size:18px}
+#pf .inv-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+#pf .inv-top .inv-num{font-family:var(--mono);color:var(--accent);font-size:15px}
+#pf .inv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+#pf .inv-f{display:flex;flex-direction:column;gap:5px;min-width:0}
+#pf .inv-f.full{grid-column:1/-1}
+#pf .inv-f>span{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#pf .inv-ed input,#pf .inv-ed select,#pf .inv-ed textarea,#pf #inv-settings input,#pf #inv-settings textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--soft);border:1px solid transparent;border-radius:10px;padding:9px 11px;width:100%;min-width:0;box-sizing:border-box}
+#pf .inv-ed textarea,#pf #inv-settings textarea{resize:vertical;min-height:62px}
+#pf .inv-ed input:focus,#pf .inv-ed select:focus,#pf .inv-ed textarea:focus,#pf #inv-settings input:focus,#pf #inv-settings textarea:focus{outline:none;border-color:var(--muted)}
+#pf .inv-items{margin-top:18px;border-top:1px solid var(--line)}
+#pf .inv-it{display:grid;grid-template-columns:minmax(0,1fr) 110px 64px 100px 28px;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+#pf .inv-it .nm{display:flex;flex-direction:column;gap:6px;min-width:0}
+#pf .inv-it .nm textarea{min-height:38px;font-size:13px;color:var(--muted)}
+#pf .inv-it .lt{font-family:var(--mono);text-align:right;padding-top:9px;font-size:14px}
+#pf .inv-ih{display:grid;grid-template-columns:minmax(0,1fr) 110px 64px 100px 28px;gap:8px;padding:10px 0 6px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#pf .inv-ih span:nth-child(4){text-align:right}
+#pf .inv-quick{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+#pf .inv-quick button{font:inherit;font-size:12px;color:var(--ink);background:var(--soft);border:1px dashed var(--line);border-radius:999px;padding:6px 11px;cursor:pointer}
+#pf .inv-quick button:hover{border-color:var(--accent);color:var(--accent)}
+#pf .inv-tot{margin:18px 0 0 auto;max-width:340px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+#pf .inv-tot div{display:flex;justify-content:space-between;align-items:center;gap:12px}
+#pf .inv-tot b{font-family:var(--mono);font-weight:500}
+#pf .inv-tot .bal{border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:16px}
+#pf .inv-tot .bal b{color:var(--accent);font-size:20px}
+#pf .inv-tot input{width:120px;text-align:right;font-family:var(--mono)}
+#pf .inv-tog{display:flex;align-items:center;gap:8px;cursor:pointer}
+#pf .inv-tog input{width:auto}
+#pf .inv-act{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+#pf .inv-act .btn.dl{background:var(--accent);color:#0E0F10;border-color:var(--accent)}
+#pf .inv-act .del{margin-right:auto}
+#pf #inv-settings{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin:0 0 18px}
+@media (max-width:700px){#pf .inv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#pf .inv-grid{grid-template-columns:minmax(0,1fr)}
+  #pf .inv-it,#pf .inv-ih{grid-template-columns:minmax(0,1fr) 84px 46px 28px}#pf .inv-it .lt,#pf .inv-ih span:nth-child(4){display:none}
+  #pf .inv-row{grid-template-columns:62px minmax(0,1fr) 86px;row-gap:4px}#pf .inv-row .inv-st{grid-column:2;justify-self:start}#pf .inv-row .x{grid-column:3;grid-row:2;justify-self:end}}
 #pf .hp-row{display:flex;align-items:center;gap:6px}
 #pf .hp-row .citem{flex:1;min-width:0}
 #pf .hp-row .x{flex:none}
@@ -535,6 +591,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
     <button data-go="home">Home</button>
     <button data-go="fin">Finances</button>
     <button data-go="clients">Clients</button>
+    <button data-go="inv">Invoices</button>
     <div class="navdd" data-views="leads,questions,pipe"><button data-go="leads" aria-haspopup="true">Leads ▾</button><div class="ddmenu"><div><button data-go="leads">Templates</button><button data-go="questions">Discovery call</button><button data-go="pipe">Pipeline</button></div></div></div>
     <button data-go="system">System</button>
     <button data-go="learn">Learning</button>
@@ -674,6 +731,19 @@ html.p-lock,html.p-lock body{overflow:hidden}
     </section>
   </div>
 
+
+  <!-- INVOICES -->
+  <div id="v-inv" hidden>
+    <section style="margin-top:40px">
+      <div class="sec-h"><h2>Invoices</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="inv-set-b" type="button">Business details</button><button class="btn" id="inv-new" type="button">+ New invoice</button></div></div>
+      <div class="inv-kpis" id="inv-kpis"></div>
+      <div id="inv-settings" hidden></div>
+      <div id="inv-editor"></div>
+      <div class="inv-filter" id="inv-filter"></div>
+      <div class="card inv-list" id="inv-list"></div>
+    </section>
+  </div>
+
   <!-- SYSTEM -->
   <div id="v-system" hidden>
     <section style="margin-top:40px">
@@ -724,7 +794,7 @@ const hasGst=(i,y)=>key(i,y)>=GST_FROM;
 const CASH_CLIENT=/^core\b/i; // Core always pays cash: no GST
 const now=new Date();
 const curIdx=now.getFullYear()===YEAR?now.getMonth():(now.getFullYear()>YEAR?11:0);
-const state={months:{},todos:[],loaded:false,canEdit:true,sel:curIdx,view:"home",year:YEAR,cmeta:{},openClient:null,cexp:{},cind:null,csrc:null,ccty:null,learn:[],lEdit:false,links:null,sys:null,sEdit:false,leads:null,zEdit:false,zOpen:null,qs:null,qEdit:false,pipe:[],pOpen:null,check:{},yearly:{}};
+const state={months:{},todos:[],loaded:false,canEdit:true,sel:curIdx,view:"home",year:YEAR,cmeta:{},openClient:null,cexp:{},cind:null,csrc:null,ccty:null,learn:[],lEdit:false,links:null,sys:null,sEdit:false,leads:null,zEdit:false,zOpen:null,qs:null,qEdit:false,pipe:[],pOpen:null,inv:null,invOpen:null,check:{},yearly:{}};
 const YEARS=[2021,2022,2023,2024,2025,2026];
 const lastIdx=y=>y<YEAR?11:y===YEAR?curIdx:-1;
 let db=null;
@@ -751,7 +821,7 @@ function stats(i,y=state.year){
 /* ---------- views ---------- */
 function go(v){
   if(v==="road")v="system";state.view=v;
-  for(const id of ["home","fin","clients","road","learn","system","leads","questions","pipe"]) $("#v-"+id).hidden=id!==v;
+  for(const id of ["home","fin","clients","inv","road","learn","system","leads","questions","pipe"]) $("#v-"+id).hidden=id!==v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.go===v));
   const NL={system:"System",learn:"Learning",leads:"Leads",questions:"Leads",pipe:"Leads"};document.querySelectorAll(".navdd").forEach(n=>{const vs=n.dataset.views.split(","),b=n.querySelector(":scope>button"),on=vs.includes(v);b.setAttribute("aria-current",on);b.firstChild.textContent=(on?NL[v]:NL[vs[0]])+" ▾"});
   if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".navdd"))document.activeElement.blur();
@@ -1325,6 +1395,140 @@ function saveSys(){
   clearTimeout(sysTimer);sysTimer=setTimeout(async()=>{try{await db.doc("system/main").set({sections:state.sys})}catch(e){flagErr(e)}},400);
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-eqmore]");if(!b)return;const si=+b.dataset.eqmore;state.eqOpen={...(state.eqOpen||{}),[si]:!(state.eqOpen||{})[si]};renderSys();if(!state.eqOpen[si]){const c=b.closest(".lsec")||document.getElementById("s-"+state.sys[si].id);const a=document.getElementById("s-"+state.sys[si].id);if(a&&a.getBoundingClientRect().top<0)a.scrollIntoView({block:"start"})}});
+/* ---------- invoices ---------- */
+const INV_LOGO="data:image/png;base64,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";
+const INV_SERVICES=[
+  {n:"Content Production & Digital Marketing",d:"Monthly agreement Content Production & Digital Marketing.",g:"mkt"},
+  {n:"Content Production",d:"Monthly agreement Content Production.",g:"con"},
+  {n:"Photography / Videography Session",d:"Shooting session, editing and delivery.",g:"one"},
+  {n:"Event Photography or Videography",d:"1 service, 2 hours.",p:590,g:"one"},
+  {n:"Event Photography & Videography",d:"2 services, 2 hours.",p:890,g:"one"},
+  {n:"Extra hour",d:"Additional event coverage, per hour.",p:150,g:"one"},
+  {n:"Website Development & Digital Setup",d:"Website design, development and setup.",g:"one"},
+  {n:"Meta Ads Management",d:"Monthly ad campaign management.",g:"mkt"}];
+const INV_DEF={next:237,set:{name:"Perspective Film",addr:"",email:"",phone:"",cid:"",etransfer:"",hst:"",terms:"Payment by e-Transfer. Thank you for your business!"},clients:{},list:[]};
+const invS=()=>{if(!state.inv||!Array.isArray(state.inv.list))state.inv=JSON.parse(JSON.stringify(INV_DEF));state.inv.set={...INV_DEF.set,...(state.inv.set||{})};state.inv.clients=state.inv.clients||{};return state.inv};
+const invNo=n=>String(n).padStart(7,"0");
+const today=()=>new Date().toLocaleDateString("en-CA");
+function invSave(){const v=invS();if(!db){try{localStorage.setItem("pf-inv",JSON.stringify(v))}catch(e){}return}db.doc("invoices/main").set(JSON.parse(JSON.stringify(v))).catch(flagErr)}
+function invClients(){const S=invS(),out=new Map();
+  Object.keys(state.months||{}).sort().forEach(mk=>{if(mk<"2025-01")return;(state.months[mk].clients||[]).forEach(x=>{if(x.status==="tax"||!x.name)return;const k=clientKey(x.name),s=slug(k);
+    const base=metaOf(k).name||x.name.replace(/\s+\d+(\/\d+)?$/,"").replace(/\s*-\s*.*$/,"").trim()||x.name;out.set(s,{s,k,name:base,amount:+x.amount||0,grp:x.grp||"one",mk,cash:x.status==="cash"})})});
+  Object.entries(S.clients).forEach(([s,c])=>{const o=out.get(s)||{s,k:s,name:c.name||s,amount:0,grp:"one"};out.set(s,{...o,bill:c})});
+  return [...out.values()].map(c=>({...c,bill:c.bill||S.clients[c.s]||null})).sort((a,b)=>a.name.localeCompare(b.name))}
+function invTaxDefault(c){if(!c)return true;const m=metaOf(c.k)||{};if(m.noTax)return false;if(m.country&&m.country!=="CA")return false;if(CASH_CLIENT.test(c.name)||c.cash)return false;return true}
+const invCalc=v=>{const sub=(v.items||[]).reduce((t,i)=>t+(+i.price||0)*(+i.qty||0),0),tax=v.tax?Math.round(sub*GST_RATE*100)/100:0,tot=sub+tax,paid=+v.paid||0;return{sub,tax,tot,paid,bal:Math.max(0,tot-paid)}};
+const invStatus=v=>{const c=invCalc(v);if(v.items&&c.tot>0&&c.bal<=0.005)return"paid";if(v.sent&&v.due&&v.due<today())return"over";return v.sent?"sent":"draft"};
+const INV_LBL={paid:"Paid",sent:"Sent",over:"Overdue",draft:"Draft"};
+function invNew(){const S=invS(),d=today(),mo=FULL[new Date().getMonth()];const v={id:"i"+Date.now(),no:S.next,date:d,due:d,client:"",bill:{name:"",addr:"Toronto, Ontario\nCanada",email:""},title:`${mo} Invoice`,items:[],tax:true,paid:0,sent:false,note:""};
+  S.list.unshift(v);S.next=(+S.next||0)+1;invSave();state.invOpen=v.id;renderInv();setTimeout(()=>{const s=$("#inv-client");if(s)s.focus()},50)}
+const invCur=()=>invS().list.find(x=>x.id===state.invOpen);
+function invPickClient(s){const v=invCur();if(!v)return;const c=invClients().find(x=>x.s===s);v.client=s;if(!c){invSave();renderInv();return}
+  const b=c.bill||{};v.bill={name:b.name||c.name,addr:b.addr||"Toronto, Ontario\nCanada",email:b.email||""};
+  v.title=`${FULL[new Date().getMonth()]} Invoice - ${v.bill.name}`;v.tax=b.tax!=null?!!b.tax:invTaxDefault(c);
+  if(!(v.items||[]).length){const sv=INV_SERVICES.find(x=>x.g===(c.grp==="ret"?"mkt":c.grp))||INV_SERVICES[0];v.items=[{name:b.service||sv.n,desc:b.desc||sv.d,price:+b.price||c.amount||sv.p||0,qty:1}]}
+  invSave();renderInv()}
+function renderInv(){const host=$("#inv-list");if(!host)return;const S=invS(),L=S.list;
+  const sum=f=>L.filter(f).reduce((t,v)=>t+invCalc(v).bal,0),yr=String(new Date().getFullYear());
+  $("#inv-kpis").innerHTML=[["Next invoice","#"+invNo(S.next)],["Outstanding",money(sum(v=>invStatus(v)==="sent"||invStatus(v)==="over"))],["Overdue",money(sum(v=>invStatus(v)==="over"))],["Billed "+yr,money(L.filter(v=>(v.date||"").startsWith(yr)).reduce((t,v)=>t+invCalc(v).tot,0))]].map(([a,b])=>`<div class="inv-k"><span>${a}</span><b>${b}</b></div>`).join("");
+  const F=state.invF||"all";$("#inv-filter").innerHTML=[["all","All"],["draft","Drafts"],["sent","Unpaid"],["paid","Paid"]].map(([k,l])=>`<button type="button" data-invf="${k}" aria-pressed="${F===k}">${l} · ${L.filter(v=>k==="all"||invStatus(v)===k||(k==="sent"&&invStatus(v)==="over")).length}</button>`).join("");
+  const vis=L.filter(v=>F==="all"||invStatus(v)===F||(F==="sent"&&invStatus(v)==="over"));
+  host.innerHTML=vis.length?vis.map(v=>{const st=invStatus(v);return`<div class="inv-row" data-invopen="${v.id}"><span class="inv-no">#${invNo(v.no)}</span><span class="inv-cl"><b>${esc(v.bill&&v.bill.name||"No client yet")}</b><small>${esc(v.title||"")} · ${esc(v.date||"")}</small></span><span class="inv-amt">${money2(invCalc(v).tot)}</span><span class="inv-st ${st}">${INV_LBL[st]}</span><span></span></div>`}).join(""):`<div class="empty">${L.length?"Nothing here.":"No invoices yet. Click “+ New invoice” to make #"+invNo(S.next)+"."}</div>`;
+  renderInvEd();renderInvSet()}
+function renderInvEd(){const host=$("#inv-editor");if(!host)return;const v=invCur();if(!v){host.innerHTML="";return}
+  if(host.contains(document.activeElement)&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)){invTotals();return}
+  const C=invClients(),c=invCalc(v),st=invStatus(v);
+  host.innerHTML=`<div class="inv-ed"><div class="inv-top"><h3>Invoice <span class="inv-num">#${invNo(v.no)}</span> <span class="inv-st ${st}" style="display:inline-block;margin-left:6px">${INV_LBL[st]}</span></h3><button class="btn ghost" type="button" data-invclose>Close</button></div>
+    <div class="inv-grid">
+      <label class="inv-f full"><span>Client</span><select id="inv-client"><option value="">Choose a client…</option>${C.map(x=>`<option value="${esc(x.s)}" ${x.s===v.client?"selected":""}>${esc(x.name)}${x.amount?` · last ${money(x.amount)}`:""}</option>`).join("")}<option value="__new" ${v.client==="__new"?"selected":""}>+ Other / new client</option></select></label>
+      <label class="inv-f"><span>Bill to · name</span><input data-iv="bill.name" value="${esc(v.bill.name)}" placeholder="Client business name"></label>
+      <label class="inv-f"><span>Email</span><input data-iv="bill.email" type="email" value="${esc(v.bill.email)}" placeholder="billing@client.com"></label>
+      <label class="inv-f full"><span>Address</span><textarea data-iv="bill.addr" rows="2" placeholder="Street, City, Province">${esc(v.bill.addr)}</textarea></label>
+      <label class="inv-f full"><span>Invoice title</span><input data-iv="title" value="${esc(v.title)}" placeholder="October Invoice - Client"></label>
+      <label class="inv-f"><span>Issue date</span><input data-iv="date" type="date" value="${esc(v.date)}"></label>
+      <label class="inv-f"><span>Due date</span><input data-iv="due" type="date" value="${esc(v.due)}"></label>
+    </div>
+    <div class="inv-items"><div class="inv-ih"><span>Product or service</span><span>Price</span><span>Qty</span><span>Line total</span><span></span></div>
+      ${(v.items||[]).map((it,i)=>`<div class="inv-it"><div class="nm"><input data-ii="${i}" data-if="name" value="${esc(it.name)}" placeholder="Service"><textarea data-ii="${i}" data-if="desc" rows="1" placeholder="Description">${esc(it.desc)}</textarea></div><input data-ii="${i}" data-if="price" inputmode="decimal" value="${esc(it.price)}" style="font-family:var(--mono);text-align:right"><input data-ii="${i}" data-if="qty" inputmode="decimal" value="${esc(it.qty)}" style="text-align:center"><span class="lt" data-lt="${i}">${money2((+it.price||0)*(+it.qty||0))}</span><button class="x" type="button" data-idel="${i}" aria-label="Remove line">×</button></div>`).join("")||`<div class="empty" style="padding:14px 0">No lines yet — pick a service below.</div>`}
+      <div class="inv-quick">${INV_SERVICES.map((s,i)=>`<button type="button" data-iadd="${i}">+ ${esc(s.n)}${s.p?` · ${money(s.p)}`:""}</button>`).join("")}<button type="button" data-iadd="-1">+ Blank line</button></div></div>
+    <div class="inv-tot" id="inv-tot"></div>
+    <label class="inv-f full" style="margin-top:14px"><span>Note on invoice (optional)</span><textarea data-iv="note" rows="2" placeholder="e.g. Includes 2 shoots in October">${esc(v.note)}</textarea></label>
+    <div class="inv-act"><button class="btn ghost del" type="button" data-invdel>Delete</button><button class="btn ghost" type="button" data-invdup>Duplicate</button><button class="btn ghost" type="button" data-invsent>${v.sent?"Mark as draft":"Mark as sent"}</button><button class="btn ghost" type="button" data-invpaid>${c.bal<=0.005&&c.tot>0?"Mark unpaid":"Mark paid"}</button><button class="btn dl" type="button" data-invpdf>Download PDF</button></div></div>`;
+  invTotals()}
+function invTotals(){const v=invCur(),h=$("#inv-tot");if(!v||!h)return;const c=invCalc(v);(v.items||[]).forEach((it,i)=>{const e=document.querySelector(`[data-lt="${i}"]`);if(e)e.textContent=money2((+it.price||0)*(+it.qty||0))});
+  const keep=h.contains(document.activeElement);if(keep){h.querySelector("[data-paidv]")&&0;}
+  const html=`<div><span>Subtotal</span><b>${money2(c.sub)}</b></div><div><label class="inv-tog"><input type="checkbox" data-itax ${v.tax?"checked":""}> GST/HST (13%)</label><b>${money2(c.tax)}</b></div><div style="border-top:1px solid var(--line);padding-top:8px"><span>Invoice total</span><b>${money2(c.tot)}</b></div><div><span>Amount paid</span><input data-iv="paid" inputmode="decimal" value="${esc(v.paid||0)}"></div><div class="bal"><span>Balance due</span><b>${money2(c.bal)}</b></div>`;
+  if(keep){h.querySelectorAll("b")[0].textContent=money2(c.sub);h.querySelectorAll("b")[1].textContent=money2(c.tax);h.querySelectorAll("b")[2].textContent=money2(c.tot);h.querySelector(".bal b").textContent=money2(c.bal)}else h.innerHTML=html}
+function renderInvSet(){const host=$("#inv-settings");if(!host)return;host.hidden=!state.invSet;if(!state.invSet){host.innerHTML="";return}if(host.contains(document.activeElement)&&/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;const s=invS().set;
+  const f=(k,l,ph,full,ta)=>`<label class="inv-f ${full?"full":""}"><span>${l}</span>${ta?`<textarea data-is="${k}" rows="3" placeholder="${ph}">${esc(s[k])}</textarea>`:`<input data-is="${k}" value="${esc(s[k])}" placeholder="${ph}">`}</label>`;
+  host.innerHTML=`<div class="inv-top"><h3 style="margin:0;font-size:18px">Business details</h3><button class="btn ghost" type="button" data-invsetx>Done</button></div><div class="inv-grid">${f("name","Business name","Perspective Film")}${f("email","Email","info@…")}${f("addr","Address","Street\nCity, Province Postal\nCountry",true,true)}${f("phone","Phone","(647) …")}${f("cid","Company ID","")}${f("hst","GST/HST number","123456789 RT0001")}${f("etransfer","E-Transfer email","pay@…")}${f("terms","Footer note","Thank you…",true,true)}
+    <label class="inv-f"><span>Next invoice number</span><input data-isnext inputmode="numeric" value="${esc(invS().next)}"></label></div>
+    <details style="margin-top:16px"><summary style="cursor:pointer;color:var(--muted);font-size:13px">Import business & client details</summary><p style="font-size:12.5px;color:var(--muted)">Paste the import text Claude gave you, then click Import. It only adds or updates details — no invoices are changed.</p><textarea id="inv-imp" rows="4" placeholder='{"set":{…},"clients":{…}}'></textarea><button class="btn" type="button" data-invimp style="margin-top:8px">Import</button> <span id="inv-imp-m" style="font-size:12.5px;color:var(--muted)"></span></details>`}
+function invField(o,path,val){const p=path.split(".");let t=o;for(let i=0;i<p.length-1;i++)t=t[p[i]]=t[p[i]]||{};t[p[p.length-1]]=val}
+document.addEventListener("input",e=>{const el=e.target;if(!el.closest||!el.closest("#v-inv")||!state.canEdit)return;const v=invCur();
+  if(el.dataset.iv&&v){invField(v,el.dataset.iv,el.dataset.iv==="paid"?parseAmt(el.value):el.value);if(el.dataset.iv==="paid")invTotals();clearTimeout(state.invT);state.invT=setTimeout(()=>{invSave();renderInv()},600);return}
+  if(el.dataset.if&&v){const it=v.items[+el.dataset.ii];if(!it)return;it[el.dataset.if]=(el.dataset.if==="price"||el.dataset.if==="qty")?parseAmt(el.value):el.value;invTotals();clearTimeout(state.invT);state.invT=setTimeout(()=>{invSave();renderInv()},600);return}
+  if(el.dataset.is){invS().set[el.dataset.is]=el.value;clearTimeout(state.invT);state.invT=setTimeout(invSave,600);return}
+  if(el.dataset.isnext!=null){const n=parseInt(el.value,10);if(n>0){invS().next=n;clearTimeout(state.invT);state.invT=setTimeout(()=>{invSave();renderInv()},600)}}});
+document.addEventListener("change",e=>{const el=e.target;if(!el.closest||!el.closest("#v-inv")||!state.canEdit)return;const v=invCur();
+  if(el.id==="inv-client"&&v){if(el.value==="__new"){v.client="__new";invSave();renderInv();const n=document.querySelector('[data-iv="bill.name"]');if(n)n.focus()}else invPickClient(el.value);return}
+  if(el.dataset.itax!=null&&v){v.tax=el.checked;invSave();invTotals();renderInv()}});
+document.addEventListener("click",e=>{const t=e.target;if(!t.closest||!t.closest("#v-inv"))return;let b;
+  if(t.closest("#inv-new")){if(state.canEdit)invNew();return}
+  if(t.closest("#inv-set-b")||t.closest("[data-invsetx]")){state.invSet=!state.invSet;renderInvSet();return}
+  if(b=t.closest("[data-invf]")){state.invF=b.dataset.invf;renderInv();return}
+  if(b=t.closest("[data-invopen]")){state.invOpen=b.dataset.invopen;renderInv();$("#inv-editor").scrollIntoView({behavior:"smooth",block:"start"});return}
+  if(t.closest("[data-invclose]")){state.invOpen=null;renderInv();return}
+  const v=invCur();if(!state.canEdit)return;
+  if(t.closest("[data-invimp]")){const m=$("#inv-imp-m");try{const d=JSON.parse($("#inv-imp").value);const S=invS();if(d.set)S.set={...S.set,...d.set};if(d.clients)for(const k in d.clients)S.clients[k]={...(S.clients[k]||{}),...d.clients[k]};if(d.next)S.next=Math.max(+S.next||0,+d.next);invSave();state.invSet=true;renderInv();const m2=$("#inv-imp-m");if(m2)m2.textContent="Imported ✓"}catch(err){m.textContent="That text isn't valid. Copy it again exactly."}return}
+  if(!v)return;
+  if(b=t.closest("[data-iadd]")){const i=+b.dataset.iadd,s=INV_SERVICES[i];const C=invClients().find(x=>x.s===v.client);v.items=v.items||[];v.items.push(s?{name:s.n,desc:s.d,price:s.p||(C&&s.g===(C.grp==="ret"?"mkt":C.grp)?C.amount:0),qty:1}:{name:"",desc:"",price:0,qty:1});invSave();renderInv();return}
+  if(b=t.closest("[data-idel]")){v.items.splice(+b.dataset.idel,1);invSave();renderInv();return}
+  if(t.closest("[data-invsent]")){v.sent=!v.sent;invSave();renderInv();return}
+  if(t.closest("[data-invpaid]")){const c=invCalc(v);v.paid=c.bal<=0.005&&c.tot>0?0:c.tot;if(v.paid)v.sent=true;invSave();renderInv();return}
+  if(t.closest("[data-invdup]")){const S=invS(),n=JSON.parse(JSON.stringify(v));n.id="i"+Date.now();n.no=S.next;S.next=(+S.next||0)+1;n.date=today();n.due=today();n.paid=0;n.sent=false;n.title=(n.title||"").replace(/^(January|February|March|April|May|June|July|August|September|October|November|December)/,FULL[new Date().getMonth()]);S.list.unshift(n);state.invOpen=n.id;invSave();renderInv();return}
+  if(b=t.closest("[data-invdel]")){if(!b.dataset.armed){armDel(b);return}const S=invS();S.list=S.list.filter(x=>x.id!==v.id);if(v.no===S.next-1)S.next=v.no;state.invOpen=null;invSave();renderInv();return}
+  if(b=t.closest("[data-invpdf]")){invPdf(v,b);return}});
+async function invPdf(v,btn){const t0=btn.textContent;btn.disabled=true;btn.textContent="Making PDF…";
+  try{await loadPdf();const {jsPDF}=window.jspdf,d=new jsPDF({unit:"pt",format:"letter"}),W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),L=54,R=W-54,S=invS().set,c=invCalc(v);
+    const ink=[20,22,26],mut=[110,114,122],line=[222,226,232],acc=[226,164,60],soft=[247,247,244];
+    const M=n=>"CA$"+(+n||0).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fd=s=>{if(!s)return"";const[y,m,dd]=s.split("-");return new Date(+y,+m-1,+dd).toLocaleDateString("en-CA",{year:"numeric",month:"short",day:"numeric"})};
+    d.setFillColor(...acc);d.rect(0,0,W,5,"F");
+    try{d.addImage(INV_LOGO,"PNG",L,40,38,46)}catch(e){}
+    d.setFont("helvetica","bold");d.setFontSize(24);d.setTextColor(...ink);d.text("INVOICE",R,62,{align:"right"});
+    d.setFont("helvetica","normal");d.setFontSize(10);d.setTextColor(...mut);d.text("#"+invNo(v.no),R,78,{align:"right"});
+    let y=112;const lab=(t,x,yy)=>{d.setFont("helvetica","bold");d.setFontSize(7.5);d.setTextColor(...mut);d.text(t.toUpperCase(),x,yy)};
+    const lines=(arr,x,yy,bold0)=>{arr.filter(Boolean).forEach((t,i)=>{d.setFont("helvetica",i===0&&bold0?"bold":"normal");d.setFontSize(i===0&&bold0?10.5:9.5);d.setTextColor(...(i===0&&bold0?ink:mut));d.text(String(t),x,yy+i*13.5)});return yy+arr.filter(Boolean).length*13.5};
+    lab("From",L,y);const fromL=[S.name,...String(S.addr||"").split("\n"),S.email,S.phone&&"Phone: "+S.phone,S.cid&&"Company ID: "+S.cid];const yf=lines(fromL,L,y+15,true);
+    const bx=W/2-10;lab("Bill to",bx,y);const yb=lines([v.bill.name,...String(v.bill.addr||"").split("\n"),v.bill.email],bx,y+15,true);
+    const dx=R-120;lab("Issue date",dx,y);d.setFont("helvetica","normal");d.setFontSize(9.5);d.setTextColor(...ink);d.text(fd(v.date),R,y,{align:"right"});
+    lab("Due date",dx,y+18);d.setFont("helvetica","normal");d.setFontSize(9.5);d.setTextColor(...ink);d.text(fd(v.due),R,y+18,{align:"right"});lab("Amount due",dx,y+36);d.setFont("helvetica","bold");d.setFontSize(10);d.setTextColor(...acc);d.text(M(c.bal),R,y+36,{align:"right"});
+    y=Math.max(yf,yb,y+50)+26;
+    d.setFont("helvetica","bold");d.setFontSize(15);d.setTextColor(...ink);d.text(v.title||"Invoice",L,y);y+=14;
+    d.autoTable({startY:y,margin:{left:L,right:W-R},head:[["Product or service","Price","Qty","Line total"]],
+      body:(v.items||[]).map(i=>[{content:(i.name||"")+(i.desc?"\n"+i.desc:""),raw:i},M(i.price),String(+i.qty||0),M((+i.price||0)*(+i.qty||0))]),theme:"plain",
+      styles:{font:"helvetica",fontSize:9.5,textColor:ink,cellPadding:{top:9,bottom:9,left:8,right:8},lineColor:line,lineWidth:{bottom:.6},valign:"top"},
+      headStyles:{fontSize:8,fontStyle:"bold",textColor:mut,fillColor:soft,lineWidth:{bottom:.6}},
+      columnStyles:{1:{halign:"right",cellWidth:90},2:{halign:"center",cellWidth:46},3:{halign:"right",cellWidth:96}},
+      didParseCell:h=>{if(h.section==="head"&&h.column.index>0)h.cell.styles.halign=h.column.index===2?"center":"right"},
+      didDrawCell:h=>{if(h.section==="body"&&h.column.index===0){const r=h.cell.raw&&h.cell.raw.raw;if(!r)return;d.setFillColor(255,255,255);d.rect(h.cell.x+1,h.cell.y+1,h.cell.width-2,h.cell.height-2,"F");d.setFont("helvetica","bold");d.setFontSize(9.5);d.setTextColor(...ink);d.text(r.name||"",h.cell.x+8,h.cell.y+19);if(r.desc){d.setFont("helvetica","normal");d.setFontSize(8.5);d.setTextColor(...mut);d.text(d.splitTextToSize(r.desc,h.cell.width-16),h.cell.x+8,h.cell.y+33)}}}});
+    y=d.lastAutoTable.finalY+22;if(y>H-230){d.addPage();y=70}
+    const tx=R-230,row=(l,val,b,col)=>{d.setFont("helvetica",b?"bold":"normal");d.setFontSize(10);d.setTextColor(...(col||ink));d.text(l,tx,y);d.text(val,R,y,{align:"right"});y+=20};
+    row("Subtotal",M(c.sub),true);d.setDrawColor(...line);d.line(tx,y-8,R,y-8);y+=6;
+    if(v.tax){row(`GST/HST${S.hst?" · "+S.hst:""} (13%)`,M(c.tax),false,mut)}else row("GST/HST","Not applicable",false,mut);
+    d.line(tx,y-8,R,y-8);y+=6;row("Invoice total",M(c.tot),true);row("Amount paid",M(c.paid),false,mut);
+    d.setFillColor(...ink);d.roundedRect(tx-12,y-6,R-tx+24,40,8,8,"F");d.setFont("helvetica","normal");d.setFontSize(10);d.setTextColor(200,200,192);d.text("Balance due",tx,y+18);
+    d.setFont("helvetica","bold");d.setFontSize(16);d.setTextColor(...acc);d.text(M(c.bal),R,y+19,{align:"right"});
+    let yl=d.lastAutoTable.finalY+22;
+    if(S.etransfer||v.note){d.setFillColor(...soft);d.setDrawColor(...line);const pt=[];if(S.etransfer)pt.push("E-Transfer to: "+S.etransfer);if(v.note)pt.push(...d.splitTextToSize(v.note,190));const hh=30+pt.length*13;d.roundedRect(L,yl-4,210,hh,6,6,"FD");lab("How to pay",L+12,yl+12);d.setFont("helvetica","normal");d.setFontSize(9);d.setTextColor(...ink);pt.forEach((t,i)=>d.text(t,L+12,yl+28+i*13))}
+    d.setDrawColor(...line);d.line(L,H-64,R,H-64);d.setFont("helvetica","normal");d.setFontSize(8.5);d.setTextColor(...mut);
+    d.text(d.splitTextToSize(S.terms||"Thank you for your business!",R-L-140),L,H-46);d.text([S.name,S.email].filter(Boolean).join(" · "),R,H-46,{align:"right"});
+    const fn=`Invoice-${invNo(v.no)}-${(v.bill.name||"client").replace(/[^A-Za-z0-9]+/g,"-")}.pdf`;
+    const dl=window.claude&&window.claude.use?await window.claude.use("downloads").catch(()=>null):null;
+    if(dl){await dl.save({filename:fn,data:d.output("blob")}).catch(()=>{})}else d.save(fn);
+  }catch(err){console.warn(err);alert("Couldn't make the PDF. Check your internet and try again.")}finally{btn.disabled=false;btn.textContent=t0}}
+
 function renderHomePlan(){const host=$("#home-plan"),sec=$("#home-plan-sec");if(!host||!state.sys)return;
   const si=state.sys.findIndex(x=>x.k==="check"&&x.id==="plan")>-1?state.sys.findIndex(x=>x.k==="check"&&x.id==="plan"):state.sys.findIndex(x=>x.k==="check");
   if(si<0){sec.hidden=true;return}sec.hidden=false;const s=state.sys[si];$("#home-plan-t").textContent=(s.t||"Growth plan").replace(/^Plan\s*·\s*/,"")+" plan";
@@ -1919,7 +2123,7 @@ function render(){
     $("#home-board").innerHTML=`<div class="card empty">Opening the books…</div>`;
     $("#fin-board").innerHTML=`<div class="card empty">Opening the books…</div>`;
   }
-  renderDebtors();try{renderHomeKpis()}catch(e){console.warn(e)}try{renderYearly()}catch(e){console.warn(e)}try{renderCheck()}catch(e){console.warn(e)}drawChart($("#chart-fin"));drawAllTime($("#chart-all"));
+  renderDebtors();try{renderHomeKpis()}catch(e){console.warn(e)}try{renderYearly()}catch(e){console.warn(e)}try{renderCheck()}catch(e){console.warn(e)}try{renderInv()}catch(e){console.warn(e)}drawChart($("#chart-fin"));drawAllTime($("#chart-all"));
   // home: current month
   const hs=stats(curIdx,YEAR);
   $("#home-month-title").textContent=FULL[curIdx];
@@ -1992,7 +2196,7 @@ function prStart(){clearInterval(prT);prT=setInterval(()=>{if(state.view==="home
     let ch=false;applying=true;try{for(const k of KEYS)if(data[k]!=null&&!(k in dirty)&&localStorage.getItem(k)!==data[k]){rawSet.call(localStorage,k,data[k]);ch=true}}finally{applying=false}
     if(!ch)return;const J=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
     loadLocal();const cm=J("pf-cmeta");if(cm)state.cmeta=cm;const pv=J("pf-pipe");if(Array.isArray(pv))state.pipe=pv;const qv=J("pf-qs");if(qv&&Array.isArray(qv.groups))state.qs=qv;
-    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;
+    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
@@ -2001,7 +2205,7 @@ function prStart(){clearInterval(prT);prT=setInterval(()=>{if(state.view==="home
 })();
 
 /* ---------- boot ---------- */
-try{const v=localStorage.getItem("pf-view");if(v&&["home","fin","clients","road","learn","system","leads","questions","pipe"].includes(v))go(v);else go("home")}catch(e){go("home")}
+try{const v=localStorage.getItem("pf-view");if(v&&["home","fin","clients","inv","road","learn","system","leads","questions","pipe"].includes(v))go(v);else go("home")}catch(e){go("home")}
 render();
 (async()=>{
   const [d,u]=await Promise.all([window.claude?.use?.("db"),window.claude?.use?.("user")]);
@@ -2009,7 +2213,7 @@ render();
   if(!state.canEdit){$("#ro-note").hidden=false;document.querySelectorAll(".tadd").forEach(h=>h.innerHTML="")}
   db=d||null;
   if(!db){try{const pv=JSON.parse(localStorage.getItem("pf-pipe"));if(Array.isArray(pv)){state.pipe=pv;renderPipe()}}catch(e){}try{const qv=JSON.parse(localStorage.getItem("pf-qs"));if(qv&&Array.isArray(qv.groups)){state.qs=qv;renderQs()}}catch(e){}try{const zv=JSON.parse(localStorage.getItem("pf-leads"));if(Array.isArray(zv)){state.leads=zv;renderLeads()}}catch(e){}try{const sv=JSON.parse(localStorage.getItem("pf-sys"));if(Array.isArray(sv)){state.sys=sv;renderSys()}}catch(e){}try{const v=JSON.parse(localStorage.getItem("pf-learn"));if(Array.isArray(v))state.learn=v;const lk=JSON.parse(localStorage.getItem("pf-links"));if(Array.isArray(lk))state.links=lk}catch(e){}if(!state.learn.length)state.learn=learnDefaults();renderLearn();lrShow()}
-  if(!db){try{state.check=JSON.parse(localStorage.getItem("pf-check"))||{}}catch(e){}try{const SEEDV="2026-10-16c",seed=state.yearly,yv=JSON.parse(localStorage.getItem("pf-yearly"));if(yv)state.yearly=yv;if(localStorage.getItem("pf-yearly-v")!==SEEDV){state.yearly={...(yv||{}),...seed};localStorage.setItem("pf-yearly",JSON.stringify(state.yearly));localStorage.setItem("pf-yearly-v",SEEDV)}}catch(e){}}
+  if(!db){try{state.inv=JSON.parse(localStorage.getItem("pf-inv"))||null}catch(e){}try{state.check=JSON.parse(localStorage.getItem("pf-check"))||{}}catch(e){}try{const SEEDV="2026-10-16c",seed=state.yearly,yv=JSON.parse(localStorage.getItem("pf-yearly"));if(yv)state.yearly=yv;if(localStorage.getItem("pf-yearly-v")!==SEEDV){state.yearly={...(yv||{}),...seed};localStorage.setItem("pf-yearly",JSON.stringify(state.yearly));localStorage.setItem("pf-yearly-v",SEEDV)}}catch(e){}}
   if(!db){state.cmeta={};try{state.cmeta=JSON.parse(localStorage.getItem("pf-cmeta"))||state.cmeta}catch(e){}}
   if(!db){loadLocal();state.loaded=true;render();return}
   let gotM=false,gotT=false;
@@ -2022,6 +2226,7 @@ render();
   db.doc("system/main").onSnapshot(d=>{const v=d.exists&&d.data().sections;state.sys=Array.isArray(v)?JSON.parse(JSON.stringify(v)):JSON.parse(JSON.stringify(SYS_DEFAULT));renderSys()},err=>console.warn(err));
   db.doc("learning/main").onSnapshot(d=>{const v=d.exists&&d.data().sections;state.learn=Array.isArray(v)?JSON.parse(JSON.stringify(v)):learnDefaults();const lk=d.exists&&d.data().links;state.links=Array.isArray(lk)?JSON.parse(JSON.stringify(lk)):JSON.parse(JSON.stringify(LINKS_DEFAULT));renderLearn();lrShow()},err=>console.warn(err));
   db.collection("yearly").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>{m[d.id]=d.data()});state.yearly=m;render()},err=>console.warn(err));
+  db.doc("invoices/main").onSnapshot(d=>{if(d.exists){state.inv=JSON.parse(JSON.stringify(d.data()));try{renderInv()}catch(e){}}},err=>console.warn(err));
   db.collection("checklist").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>{m[d.id]=d.data()});state.check=m;renderCheck()},err=>console.warn(err));
   db.collection("clientMeta").onSnapshot(snap=>{const m={};snap.docs.forEach(d=>{m[d.id]=d.data()});state.cmeta=m;render()},err=>console.warn(err));
   db.collection("todos").onSnapshot(snap=>{
@@ -2034,7 +2239,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,collection,getDocs,doc,writeBatch,onSnapshot,getDoc,setDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyB2xBVxiiY0lIX_wxLA9fbxkpk_raVoY6M",authDomain:"perspective-system.firebaseapp.com",projectId:"perspective-system",storageBucket:"perspective-system.firebasestorage.app",messagingSenderId:"171395012972",appId:"1:171395012972:web:209e3ba575c50914a23b49"};
-const OWNER="perspectivefilm.ca@gmail.com",KEYS=["pf-months-v2","pf-todos-v2","pf-cmeta","pf-learn","pf-links","pf-sys","pf-leads","pf-qs","pf-pipe","pf-check","pf-yearly"];
+const OWNER="perspectivefilm.ca@gmail.com",KEYS=["pf-months-v2","pf-todos-v2","pf-cmeta","pf-learn","pf-links","pf-sys","pf-leads","pf-qs","pf-pipe","pf-check","pf-yearly","pf-inv"];
 const app=initializeApp(cfg),auth=getAuth(app),fs=getFirestore(app),col=collection(fs,"hq");
 const $=id=>document.getElementById(id),T=t=>{$("pf-lockt").textContent=t},M=t=>{$("pf-lockm").textContent=t||""};
 const dayId=()=>new Date().toLocaleDateString("en-CA");
