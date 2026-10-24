@@ -9,5 +9,5 @@ Squarespace code block:
 
 ```html
 <div id="pf-host"></div>
-<script src="https://perspectivefilm.github.io/perspective-system/loader.js"></script>
+<script src="https://perspectivefilm.github.io/perspective-System/loader.js"></script>
 ```

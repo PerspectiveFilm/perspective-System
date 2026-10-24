@@ -1,6 +1,6 @@
 /* Perspective HQ loader – keep this file stable. It pulls the latest app.html from GitHub Pages and mounts it. */
 (function(){
-  var BASE="https://perspectivefilm.github.io/perspective-system/";
+  var BASE="https://perspectivefilm.github.io/perspective-System/";
   var host=document.getElementById("pf-host");if(!host){host=document.createElement("div");host.id="pf-host";(document.currentScript&&document.currentScript.parentNode||document.body).appendChild(host)}
   host.innerHTML='<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;background:#0E0F10;color:#8D8E89;font:600 11px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase">Perspective Film HQ</div>';
   function mount(html){
