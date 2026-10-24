@@ -536,7 +536,6 @@ html.p-lock,html.p-lock body{overflow:hidden}
     <button data-go="fin">Finances</button>
     <button data-go="clients">Clients</button>
     <div class="navdd" data-views="leads,questions,pipe"><button data-go="leads" aria-haspopup="true">Leads ▾</button><div class="ddmenu"><div><button data-go="leads">Templates</button><button data-go="questions">Discovery call</button><button data-go="pipe">Pipeline</button></div></div></div>
-    <button data-go="road">Roadmap</button>
     <div class="navdd" data-views="system,learn"><button data-go="system" aria-haspopup="true">System ▾</button><div class="ddmenu"><div><button data-go="system">System</button><button data-go="learn">Learning</button></div></div></div>
   </div>
 </div></nav>
@@ -575,7 +574,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
     </section>
 
     <section>
-      <div class="sec-h"><h2>To do</h2><button class="btn ghost" data-go="road">Open roadmap</button></div>
+      <div class="sec-h"><h2>To do</h2><button class="btn ghost" data-go="system">Open System</button></div>
       <div class="grid2">
         <div class="card"><div class="list-h"><h3>CLIENTS</h3><span class="tag" data-count="clients"></span></div><div class="tlist" data-list="clients"></div><div class="tadd" data-list="clients"></div></div>
         <div class="card"><div class="list-h"><h3>STUDIO</h3><span class="tag" data-count="studio"></span></div><div class="tlist" data-list="studio"></div><div class="tadd" data-list="studio"></div></div>
@@ -678,6 +677,12 @@ html.p-lock,html.p-lock body{overflow:hidden}
   <div id="v-system" hidden>
     <section style="margin-top:40px">
       <div class="sec-h"><h2>System</h2><button class="btn" id="s-edit">Edit</button></div>
+      <div class="card"><div class="list-h"><h3>GOALS</h3><span class="tag" data-count="goal"></span></div><div class="tlist" data-list="goal"></div><div class="tadd" data-list="goal"></div></div>
+      <div class="grid2" style="margin-top:14px">
+        <div class="card"><div class="list-h"><h3>CLIENTS</h3><span class="tag" data-count="clients"></span></div><div class="tlist" data-list="clients"></div><div class="tadd" data-list="clients"></div></div>
+        <div class="card"><div class="list-h"><h3>STUDIO</h3><span class="tag" data-count="studio"></span></div><div class="tlist" data-list="studio"></div><div class="tadd" data-list="studio"></div></div>
+      </div>
+      <div style="height:22px"></div>
       <p class="ro-note" id="s-hint" hidden>Editing: change any text, × removes, + adds. Use **double stars** for bold. Changes save when you click away.</p>
       <nav class="lchips" id="schips" aria-label="System sections"></nav>
       <div id="sgrid" class="sgrid"></div>
@@ -697,17 +702,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
     </section>
   </div>
 
-  <!-- ROADMAP -->
-  <div id="v-road" hidden>
-    <section style="margin-top:40px">
-      <div class="sec-h"><h2>Roadmap</h2><span class="eyebrow">Goals and next steps</span></div>
-      <div class="card"><div class="list-h"><h3>GOALS</h3><span class="tag" data-count="goal"></span></div><div class="tlist" data-list="goal"></div><div class="tadd" data-list="goal"></div></div>
-      <div class="grid2" style="margin-top:14px">
-        <div class="card"><div class="list-h"><h3>CLIENTS</h3><span class="tag" data-count="clients"></span></div><div class="tlist" data-list="clients"></div><div class="tadd" data-list="clients"></div></div>
-        <div class="card"><div class="list-h"><h3>STUDIO</h3><span class="tag" data-count="studio"></span></div><div class="tlist" data-list="studio"></div><div class="tadd" data-list="studio"></div></div>
-      </div>
-    </section>
-  </div>
+  <div id="v-road" hidden></div>
   <p class="ro-note" id="ro-note" hidden>View only. Only the owner can edit these books.</p>
 </main>
 </div>
@@ -754,7 +749,7 @@ function stats(i,y=state.year){
 
 /* ---------- views ---------- */
 function go(v){
-  state.view=v;
+  if(v==="road")v="system";state.view=v;
   for(const id of ["home","fin","clients","road","learn","system","leads","questions","pipe"]) $("#v-"+id).hidden=id!==v;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.go===v));
   const NL={system:"System",learn:"Learning",leads:"Leads",questions:"Leads",pipe:"Leads"};document.querySelectorAll(".navdd").forEach(n=>{const vs=n.dataset.views.split(","),b=n.querySelector(":scope>button"),on=vs.includes(v);b.setAttribute("aria-current",on);b.firstChild.textContent=(on?NL[v]:NL[vs[0]])+" ▾"});
