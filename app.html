@@ -1328,6 +1328,7 @@ function saveSys(){
   if(!db){try{localStorage.setItem("pf-sys",JSON.stringify(state.sys))}catch(e){}return}
   clearTimeout(sysTimer);sysTimer=setTimeout(async()=>{try{await db.doc("system/main").set({sections:state.sys})}catch(e){flagErr(e)}},400);
 }
+document.addEventListener("click",e=>{const b=e.target.closest("[data-eqmore]");if(!b)return;const si=+b.dataset.eqmore;state.eqOpen={...(state.eqOpen||{}),[si]:!(state.eqOpen||{})[si]};renderSys();if(!state.eqOpen[si]){const c=b.closest(".lsec")||document.getElementById("s-"+state.sys[si].id);const a=document.getElementById("s-"+state.sys[si].id);if(a&&a.getBoundingClientRect().top<0)a.scrollIntoView({block:"start"})}});
 function renderHomePlan(){const host=$("#home-plan"),sec=$("#home-plan-sec");if(!host||!state.sys)return;
   const si=state.sys.findIndex(x=>x.k==="check"&&x.id==="plan")>-1?state.sys.findIndex(x=>x.k==="check"&&x.id==="plan"):state.sys.findIndex(x=>x.k==="check");
   if(si<0){sec.hidden=true;return}sec.hidden=false;const s=state.sys[si];$("#home-plan-t").textContent=(s.t||"Growth plan").replace(/^Plan\s*·\s*/,"")+" plan";
@@ -1373,7 +1374,8 @@ function renderSys(){
       const tot=a=>a.reduce((t,[x])=>t+(+x.p||0),0);
       const row=([x,i])=>ed?`<div class="eq-edit">${inp(x.n,A("en",`data-ii="${i}" id="se-${si}-${i}-n"`),"Item")}${inp(x.p,A("ep",`data-ii="${i}" id="se-${si}-${i}-p" inputmode="decimal"`),"$","eq-p")}<button class="x" data-sdel="${si}:${i}" aria-label="Delete">×</button></div>`
         :`<div class="eq"><span class="eq-n">${esc(x.n)}</span><span class="eq-p">${money(+x.p||0)}</span>${state.canEdit?`<button class="eq-mv" data-sown="${si}:${i}" title="${x.own?"Move to To buy":"Mark as bought"}">${x.own?"↩":"✓ Bought"}</button>`:"<span></span>"}</div>`;
-      body=`<div class="eqcols"><div><div class="eq-h"><span>To buy · ${need.length}</span><b style="color:var(--accent)">${money(tot(need))}</b></div>${need.map(row).join("")}${ed?`<button class="btn ghost le-add" data-saddE="${si}:0">+ Add item to buy</button>`:""}</div><div><div class="eq-h"><span>Owned · ${own.length}</span><b>${money(tot(own))}</b></div>${own.map(row).join("")}${ed?`<button class="btn ghost le-add" data-saddE="${si}:1">+ Add owned item</button>`:""}</div></div>`;
+      const EQN=5,eo=ed||(state.eqOpen||{})[si],cut=a=>eo?a:a.slice(0,EQN),more=Math.max(0,need.length-EQN)+Math.max(0,own.length-EQN);
+      body=`<div class="eqcols"><div><div class="eq-h"><span>To buy · ${need.length}</span><b style="color:var(--accent)">${money(tot(need))}</b></div>${cut(need).map(row).join("")}${ed?`<button class="btn ghost le-add" data-saddE="${si}:0">+ Add item to buy</button>`:""}</div><div><div class="eq-h"><span>Owned · ${own.length}</span><b>${money(tot(own))}</b></div>${cut(own).map(row).join("")}${ed?`<button class="btn ghost le-add" data-saddE="${si}:1">+ Add owned item</button>`:""}</div></div>${!ed&&(more||(state.eqOpen||{})[si])?`<button class="yr-more" type="button" data-eqmore="${si}">${(state.eqOpen||{})[si]?"Show less":`Show all · ${more} more`}</button>`:""}`;
     }
     return`<article class="card lsec ${s.w?"wide":""} ${ed?"editing":""}" id="s-${esc(s.id)}">${head}${body}</article>`;
   }).join("")+(ed?`<button class="card le-newsec" data-snewsec>+ Add section</button>`:"");
