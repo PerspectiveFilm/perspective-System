@@ -681,7 +681,8 @@ html.p-lock,html.p-lock body{overflow:hidden}
   <!-- CLIENTS -->
   <div id="v-clients" hidden>
     <section style="margin-top:40px">
-      <div class="sec-h"><h2>Clients</h2><input class="csearch" id="csearch" type="search" placeholder="Search clients" aria-label="Search clients"></div>
+      <div class="sec-h"><h2>Clients</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="csearch" id="csearch" type="search" placeholder="Search clients" aria-label="Search clients"><button class="btn" id="nc-open" type="button">+ New client</button></div></div>
+      <div id="nc-form" hidden></div>
       <div class="kpis" id="client-kpis"></div>
       <div class="clist-wrap">
         <div class="card"><div class="list-h"><h3>ACTIVE RETAINERS</h3><span class="tag" id="cc-active"></span></div><div id="cl-active"></div></div>
@@ -1532,6 +1533,51 @@ let invFontData=null;
 async function invFonts(d){try{if(!invFontData){const base="https://perspectivefilm.github.io/perspective-System/fonts/";const get=async n=>{const r=await fetch(base+n);if(!r.ok)throw 0;const b=new Uint8Array(await r.arrayBuffer());let s="";for(let i=0;i<b.length;i+=8192)s+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(s)};
     invFontData=await Promise.all([get("WixMadeforText-Regular.ttf"),get("WixMadeforText-Bold.ttf")])}
   d.addFileToVFS("WixR.ttf",invFontData[0]);d.addFont("WixR.ttf","WixR","normal");d.addFileToVFS("WixB.ttf",invFontData[1]);d.addFont("WixB.ttf","WixB","normal");return true}catch(e){console.warn("fonts",e);return false}}
+
+/* ---------- new client ---------- */
+function renderNewClient(){const host=$("#nc-form");if(!host)return;host.hidden=!state.ncOpen;if(!state.ncOpen){host.innerHTML="";return}if(host.innerHTML)return;
+  const mo=MONTHS.map((m,i)=>`<option value="${i}" ${i===curIdx?"selected":""}>${FULL[i]} ${YEAR}</option>`).join("");
+  const sel=(id,opts)=>`<select id="${id}">${opts.map(o=>Array.isArray(o)?`<option value="${o[0]}">${o[1]}</option>`:`<option>${o}</option>`).join("")}</select>`;
+  host.innerHTML=`<div class="inv-ed" style="margin-bottom:14px"><div class="inv-top"><h3>New client</h3><button class="btn ghost" type="button" data-ncx>Cancel</button></div>
+    <div class="inv-grid">
+      <label class="inv-f full"><span>Client / business name *</span><input id="nc-name" placeholder="e.g. Olive & Fig"></label>
+      <label class="inv-f"><span>Type</span>${sel("nc-type",[["mkt","Retainer · Marketing"],["con","Retainer · Content"],["one","Single shoot / one-time"]])}</label>
+      <label class="inv-f"><span id="nc-amt-l">Monthly fee (before HST)</span><input id="nc-amt" inputmode="decimal" placeholder="$1,500"></label>
+      <label class="inv-f"><span id="nc-start-l">Starts</span><select id="nc-start">${mo}</select></label>
+      <label class="inv-f" id="nc-end-w"><span>Runs until</span><select id="nc-end">${MONTHS.map((m,i)=>`<option value="${i}" ${i===11?"selected":""}>${FULL[i]} ${YEAR}</option>`).join("")}</select></label>
+      <label class="inv-f"><span>First payment</span>${sel("nc-status",[["unpaid","Unpaid"],["paid","Paid"],["deposit","Deposit 50%"],["cash","Cash"]])}</label>
+      <label class="inv-f"><span>Pays</span>${sel("nc-due",[["","When invoiced"],["first","1st of each month"],["eom","End of month / 1st of next"]])}</label>
+      <label class="inv-f"><span>Payment method</span>${sel("nc-pay",["","E-transfer","Bank transfer","Cash","Cheque","Invoice","Card"].map(o=>[o,o||"Choose…"]))}</label>
+      <label class="inv-f"><span>Country</span>${sel("nc-cty",[["CA","Canada · HST 13%"],["AL","Albania · no HST"],["XX","Other · no HST"]])}</label>
+      <label class="inv-f"><span>Industry</span>${sel("nc-ind",[["","Choose…"],...INDUSTRIES.map(x=>[x,x])])}</label>
+      <label class="inv-f"><span>Lead source</span>${sel("nc-src",[["","Choose…"],...SOURCES.map(x=>[x,x])])}</label>
+      <label class="inv-f"><span>Contact person</span><input id="nc-contact" placeholder="Name"></label>
+      <label class="inv-f"><span>Email (for invoices)</span><input id="nc-email" type="email" placeholder="billing@client.com"></label>
+      <label class="inv-f"><span>Phone</span><input id="nc-phone" placeholder="416 …"></label>
+      <label class="inv-f"><span>Website / Instagram</span><input id="nc-link" placeholder="@handle or site"></label>
+      <label class="inv-f full"><span>Address (for invoices)</span><textarea id="nc-addr" rows="2">Toronto, Ontario
+Canada</textarea></label>
+      <label class="inv-f full"><span>Service / package</span><input id="nc-service" placeholder="e.g. Marketing + 1 shoot a month"></label>
+      <label class="inv-f full"><span>Google Drive folder</span><input id="nc-drive" placeholder="Paste the folder link"></label>
+      <label class="inv-f full"><span>Notes</span><textarea id="nc-notes" rows="2" placeholder="Contract length, deliverables…"></textarea></label>
+    </div>
+    <p class="ro-note" id="nc-hint" style="margin:12px 0 0"></p>
+    <div class="inv-act"><button class="btn dl" type="button" data-ncsave>Add client</button></div></div>`;
+  ncSync();setTimeout(()=>{const n=$("#nc-name");if(n)n.focus()},30)}
+function ncSync(){const t=$("#nc-type");if(!t)return;const one=t.value==="one";$("#nc-end-w").hidden=one;$("#nc-amt-l").textContent=one?"Price (before HST)":"Monthly fee (before HST)";$("#nc-start-l").textContent=one?"Shoot month":"Starts";
+  const s=+$("#nc-start").value,e=+$("#nc-end").value,n=Math.max(1,e-s+1);$("#nc-hint").textContent=one?`Adds one row to ${FULL[s]} in Finances and lists them under One-time shoots.`:`Adds them to Finances every month from ${FULL[s]} to ${FULL[Math.max(s,e)]} (${n} month${n>1?"s":""}), to Active retainers, and to the monthly checklist.`}
+document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#nc-form"))ncSync()});
+document.addEventListener("click",e=>{const t=e.target;if(t.closest("#nc-open")){state.ncOpen=!state.ncOpen;const h=$("#nc-form");if(h)h.innerHTML="";renderNewClient();return}
+  if(t.closest("[data-ncx]")){state.ncOpen=false;renderNewClient();return}
+  if(!t.closest("[data-ncsave]")||!state.canEdit)return;
+  const v=id=>($("#"+id)||{}).value||"",name=v("nc-name").trim();if(!name){$("#nc-name").focus();return}
+  const g=v("nc-type"),amt=parseAmt(v("nc-amt")),st=v("nc-status"),cty=v("nc-cty"),s=+v("nc-start"),en=g==="one"?s:Math.max(s,+v("nc-end"));
+  for(let i=s;i<=en;i++){const m=clone(i,YEAR);const row={name,amount:amt,status:i===s?st:"unpaid",grp:g};if(cty!=="CA")row.gst=false;m.clients.push(row);saveMonth(i,m,YEAR)}
+  const k=clientKey(name);
+  saveMeta(k,{name,type:g==="one"?"oneoff":"active",country:cty==="XX"?"":cty,industry:v("nc-ind"),source:v("nc-src"),pay:v("nc-pay"),due:v("nc-due"),contact:v("nc-contact").trim(),email:v("nc-email").trim(),phone:v("nc-phone").trim(),link:v("nc-link").trim(),service:v("nc-service").trim(),fee:g==="one"?"":(amt?String(amt):""),drive:v("nc-drive").trim(),notes:v("nc-notes").trim(),noTax:cty!=="CA"?true:null});
+  try{const S=invS();S.clients[slug(k)]={...(S.clients[slug(k)]||{}),name,email:v("nc-email").trim(),addr:v("nc-addr").trim(),tax:cty==="CA"};invSave()}catch(err){console.warn(err)}
+  state.ncOpen=false;renderNewClient();state.openClient=k;render();
+  const tt=document.getElementById("h-toast")||Object.assign(document.createElement("div"),{id:"h-toast",className:"h-toast"});if(!tt.parentNode)($("#pf")||document.body).appendChild(tt);tt.textContent=`${name} added ✓`;tt.classList.add("on");setTimeout(()=>tt.classList.remove("on"),1800)});
 
 function renderHomePlan(){const host=$("#home-plan"),sec=$("#home-plan-sec");if(!host||!state.sys)return;
   const si=state.sys.findIndex(x=>x.k==="check"&&x.id==="plan")>-1?state.sys.findIndex(x=>x.k==="check"&&x.id==="plan"):state.sys.findIndex(x=>x.k==="check");
