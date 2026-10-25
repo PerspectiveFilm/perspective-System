@@ -352,6 +352,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-col.p-over{border-color:var(--sc,var(--accent));background:var(--soft)}
 .p-ghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(2deg) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:.95}
 #pf .p-empty{font-size:12.5px;color:var(--muted);padding:8px 4px}
+#pf .ck-t.urg span{color:var(--unpaid);font-weight:600}
+#pf .ck-u{flex:none;width:22px;height:22px;border-radius:6px;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:800;line-height:1;cursor:pointer;opacity:.45;padding:0}
+#pf .ck-u:hover{opacity:1;color:var(--unpaid)}
+#pf .ck-u[aria-pressed="true"]{opacity:1;color:#fff;background:var(--unpaid)}
 
 #pf .inv-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 18px}
 #pf .inv-k{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
@@ -1897,7 +1901,7 @@ function renderCheck(){
   const ed=state.canEdit;
   host.innerHTML=C.map(c=>{const T=ckTasks(mk,c.k),n=T.filter(x=>x.done).length;
     return`<div class="ck-card ${n===T.length&&T.length?"done":""}"><div class="ck-h"><b>${esc(c.name)}</b><span>${c.g==="con"?"Content":"Marketing"} · <em>${n}/${T.length}</em>${c.extra&&ed?`<button class="x ck-rm" data-ckrm="${esc(c.k)}" title="Remove client from checklist" aria-label="Remove client">×</button>`:""}</span></div>
-    ${T.map((x,ti)=>`<label class="ck-t"><input type="checkbox" data-ck="${esc(c.k)}" data-ti="${ti}" ${x.done?"checked":""} ${ed?"":"disabled"}><span>${esc(x.t)}</span>${ed?`<button class="x" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Remove task">×</button>`:""}</label>`).join("")}
+    ${T.map((x,ti)=>`<label class="ck-t ${x.u&&!x.done?"urg":""}"><input type="checkbox" data-ck="${esc(c.k)}" data-ti="${ti}" ${x.done?"checked":""} ${ed?"":"disabled"}><span>${esc(x.t)}</span>${ed?`<button class="ck-u" type="button" data-cku="${esc(c.k)}" data-ti="${ti}" aria-pressed="${!!x.u}" title="${x.u?"Not urgent":"Mark urgent"}" aria-label="Mark urgent">!</button><button class="x" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Remove task">×</button>`:""}</label>`).join("")}
     ${ed?`<form class="ck-add" data-ckadd="${esc(c.k)}"><input placeholder="Add task" aria-label="Add task for ${esc(c.name)}"><button aria-label="Add">+</button></form>`:""}</div>`}).join("")+(ed?`<form class="ck-card ck-newc" id="ck-newc"><input id="ck-newc-n" placeholder="+ Add client" aria-label="Add client to checklist"><select id="ck-newc-g" aria-label="Type"><option value="mkt">Marketing</option><option value="con">Content</option></select><button class="btn">Add</button></form>`:"");
 }
 function ckSaveExtra(){if(!db){try{localStorage.setItem("pf-check",JSON.stringify(state.check))}catch(e){}return}db.doc("checklist/_extra").set(state.check._extra||{list:[]}).catch(flagErr)}
@@ -1907,6 +1911,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-ckrm]");if
   state.check={...state.check,_extra:{list:(((state.check||{})._extra||{}).list||[]).filter(x=>x.k!==b.dataset.ckrm)}};ckSaveExtra();renderCheck()});
 function ckMutate(k,fn){const mk=nowKey(),d=state.check[mk]=JSON.parse(JSON.stringify(state.check[mk]||{})),s=slug(k);const T=ckTasks(mk,k).map(x=>({...x}));fn(T);d[s]={key:k,tasks:T};ckSave(mk);renderCheck()}
 document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.ck==null||!state.canEdit)return;ckMutate(el.dataset.ck,T=>{const x=T[+el.dataset.ti];if(x)x.done=el.checked})});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-cku]");if(!b||!state.canEdit)return;e.preventDefault();ckMutate(b.dataset.cku,T=>{const x=T[+b.dataset.ti];if(x){if(x.u)delete x.u;else x.u=true}})});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ckdel]");if(!b||!state.canEdit)return;e.preventDefault();ckMutate(b.dataset.ckdel,T=>T.splice(+b.dataset.ti,1))});
 document.addEventListener("submit",e=>{const f=e.target.closest("[data-ckadd]");if(!f)return;e.preventDefault();if(!state.canEdit)return;const v=f.querySelector("input").value.trim();if(!v)return;
   ckMutate(f.dataset.ckadd,T=>T.push({t:v,done:false}));const nf=document.querySelector(`[data-ckadd="${CSS.escape(f.dataset.ckadd)}"] input`);if(nf)nf.focus()});
