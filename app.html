@@ -1123,7 +1123,7 @@ function clientDetail(c,all){
       ${f("contact","Contact person","Name")}${f("phone","Phone","416 …")}
       ${f("email","Email","name@company.com")}${f("link","Website / Instagram","@handle or site")}
       ${f("service","Service / package","e.g. 4 reels + 1 shoot a month")}${f("fee","Monthly fee","$")}
-      <label>Pays<select id="cf-${sk}-due" data-cf="due" ${ro}><option value="" ${m.due!=="eom"?"selected":""}>When invoiced</option><option value="eom" ${m.due==="eom"?"selected":""}>End of month / 1st of next</option></select></label>
+      <label>Pays<select id="cf-${sk}-due" data-cf="due" ${ro}><option value="" ${!m.due?"selected":""}>When invoiced</option><option value="first" ${m.due==="first"?"selected":""}>1st of each month</option><option value="eom" ${m.due==="eom"?"selected":""}>End of month / 1st of next</option></select></label>
       <label>Payment method<select id="cf-${sk}-pay" data-cf="pay" ${ro}>${["","E-transfer","Cash","Cheque","Invoice","Card"].map(o=>`<option value="${o}" ${(m.pay||"")===o?"selected":""}>${o||"Choose…"}</option>`).join("")}</select></label>
       <label>List<select id="cf-${sk}-type" data-cf="type" ${ro}><option value="auto" ${!m.type||m.type==="auto"?"selected":""}>Auto (${TYPE_LABEL[c.auto]})</option>${Object.entries(TYPE_LABEL).map(([v,l])=>`<option value="${v}" ${m.type===v?"selected":""}>${l}</option>`).join("")}</select></label>
       <label>Industry<select id="cf-${sk}-industry" data-cf="industry" ${ro}><option value="">Choose…</option>${INDUSTRIES.map(o=>`<option ${m.industry===o?"selected":""}>${o}</option>`).join("")}</select></label>
@@ -1766,7 +1766,7 @@ document.addEventListener("click",async e=>{
 /* ---------- debtors ---------- */
 function debtors(){
   const nk=nowKey(),g={},td=new Date(),pk=key(td.getMonth()===0?11:td.getMonth()-1,td.getMonth()===0?td.getFullYear()-1:td.getFullYear());let later=0;
-  const notDue=(k,mk)=>(metaOf(k)||{}).due==="eom"&&(mk===nk||(mk===pk&&td.getDate()===1));
+  const notDue=(k,mk)=>{const du=(metaOf(k)||{}).due;return du==="eom"?(mk===nk||(mk===pk&&td.getDate()===1)):du==="first"?(mk===nk&&td.getDate()===1):false};
   for(const mk of Object.keys(state.months).sort()){
     if(mk>nk)continue;const[y,mo]=mk.split("-").map(Number),i=mo-1,rate=hasGst(i,y)?GST_RATE:0;
     (state.months[mk].clients||[]).forEach((x,j)=>{
@@ -1785,8 +1785,8 @@ function renderDebtors(){
   $("#debt-sub").textContent=D.length?`${D.length} client${D.length>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
   if(!state.loaded){host.innerHTML=`<div class="d-empty">Loading…</div>`;return}
   host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.dep?"dep":it.mk<nk?"old":""}">${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
-      <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet · month-end payers</span><b>${money(D.later)}</b></div>`:"")
-    :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet · month-end payers</span><b>${money(D.later)}</b></div>`:"");
+      <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
+    :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"");
 }
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-dpay]");if(!b||!state.canEdit)return;
