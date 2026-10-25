@@ -352,6 +352,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-col.p-over{border-color:var(--sc,var(--accent));background:var(--soft)}
 .p-ghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(2deg) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:.95}
 #pf .p-empty{font-size:12.5px;color:var(--muted);padding:8px 4px}
+#pf .d-tot.d-later{opacity:.6;border-top:0;padding-top:2px}
+#pf .d-tot.d-later b{color:var(--muted)}
 #pf .ck-t.urg span{color:var(--unpaid);font-weight:600}
 #pf .ck-u{flex:none;width:22px;height:22px;border-radius:6px;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:800;line-height:1;cursor:pointer;opacity:.45;padding:0}
 #pf .ck-u:hover{opacity:1;color:var(--unpaid)}
@@ -1121,6 +1123,7 @@ function clientDetail(c,all){
       ${f("contact","Contact person","Name")}${f("phone","Phone","416 …")}
       ${f("email","Email","name@company.com")}${f("link","Website / Instagram","@handle or site")}
       ${f("service","Service / package","e.g. 4 reels + 1 shoot a month")}${f("fee","Monthly fee","$")}
+      <label>Pays<select id="cf-${sk}-due" data-cf="due" ${ro}><option value="" ${m.due!=="eom"?"selected":""}>When invoiced</option><option value="eom" ${m.due==="eom"?"selected":""}>End of month / 1st of next</option></select></label>
       <label>Payment method<select id="cf-${sk}-pay" data-cf="pay" ${ro}>${["","E-transfer","Cash","Cheque","Invoice","Card"].map(o=>`<option value="${o}" ${(m.pay||"")===o?"selected":""}>${o||"Choose…"}</option>`).join("")}</select></label>
       <label>List<select id="cf-${sk}-type" data-cf="type" ${ro}><option value="auto" ${!m.type||m.type==="auto"?"selected":""}>Auto (${TYPE_LABEL[c.auto]})</option>${Object.entries(TYPE_LABEL).map(([v,l])=>`<option value="${v}" ${m.type===v?"selected":""}>${l}</option>`).join("")}</select></label>
       <label>Industry<select id="cf-${sk}-industry" data-cf="industry" ${ro}><option value="">Choose…</option>${INDUSTRIES.map(o=>`<option ${m.industry===o?"selected":""}>${o}</option>`).join("")}</select></label>
@@ -1762,18 +1765,19 @@ document.addEventListener("click",async e=>{
 
 /* ---------- debtors ---------- */
 function debtors(){
-  const nk=nowKey(),g={};
+  const nk=nowKey(),g={},td=new Date(),pk=key(td.getMonth()===0?11:td.getMonth()-1,td.getMonth()===0?td.getFullYear()-1:td.getFullYear());let later=0;
+  const notDue=(k,mk)=>(metaOf(k)||{}).due==="eom"&&(mk===nk||(mk===pk&&td.getDate()===1));
   for(const mk of Object.keys(state.months).sort()){
     if(mk>nk)continue;const[y,mo]=mk.split("-").map(Number),i=mo-1,rate=hasGst(i,y)?GST_RATE:0;
     (state.months[mk].clients||[]).forEach((x,j)=>{
       if(!x.name||(x.status!=="unpaid"&&x.status!=="deposit"))return;
       const gOk=rowTaxable(x);
       const owed=(+x.amount||0)*(x.status==="deposit"?.5:1)*(1+(gOk?rate:0));if(owed<=0)return;
-      const k=clientKey(x.name),d=g[k]||(g[k]={k,name:metaOf(k).name||cleanName(x.name),total:0,items:[]});
+      const k=clientKey(x.name);if(notDue(k,mk)){later+=owed;return}const d=g[k]||(g[k]={k,name:metaOf(k).name||cleanName(x.name),total:0,items:[]});
       d.total+=owed;d.items.push({nm:x.name.trim(),mk,i,y,j,owed,dep:x.status==="deposit"});
     });
   }
-  return Object.values(g).sort((a,b)=>b.total-a.total);
+  const R=Object.values(g).sort((a,b)=>b.total-a.total);R.later=later;return R;
 }
 function renderDebtors(){
   const host=$("#debt-list");if(!host)return;
@@ -1781,8 +1785,8 @@ function renderDebtors(){
   $("#debt-sub").textContent=D.length?`${D.length} client${D.length>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
   if(!state.loaded){host.innerHTML=`<div class="d-empty">Loading…</div>`;return}
   host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.dep?"dep":it.mk<nk?"old":""}">${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
-      <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`
-    :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`;
+      <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet · month-end payers</span><b>${money(D.later)}</b></div>`:"")
+    :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet · month-end payers</span><b>${money(D.later)}</b></div>`:"");
 }
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-dpay]");if(!b||!state.canEdit)return;
