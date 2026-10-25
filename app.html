@@ -147,6 +147,11 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .cyears{display:flex;flex-wrap:wrap;gap:6px}
 #pf .cyears span{font-family:var(--mono);font-size:12px;background:var(--soft);border-radius:999px;padding:3px 10px}
 #pf .spark{width:100%;height:64px;display:block}
+#pf .sdots{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 4px}
+#pf .sd{width:9px;height:9px;border-radius:50%;display:block;background:var(--paid)}
+#pf .sd.out{background:var(--unpaid)}
+#pf .sd.part{background:linear-gradient(90deg,var(--paid) 50%,var(--unpaid) 50%)}
+#pf .sd.none{background:none;box-shadow:inset 0 0 0 1px var(--line)}
 #pf .cfields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (max-width:620px){#pf .cfields{grid-template-columns:minmax(0,1fr)}}
 #pf .cfields label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:0}
@@ -1095,13 +1100,8 @@ async function saveMeta(k,patch){
 function spark(c){
   const [fy,fm]=c.first.split("-").map(Number),[ly,lm]=c.last.split("-").map(Number);
   const keys=[];for(let y=fy,m=fm;y<ly||(y===ly&&m<=lm);m++){if(m>12){m=1;y++}if(y>ly||(y===ly&&m>lm))break;keys.push(`${y}-${String(m).padStart(2,"0")}`)}
-  const n=keys.length,W=Math.max(120,n*12),H=64,max=Math.max(...keys.map(k=>{const v=c.months[k];return v?v.paid+v.out:0}),1);
-  const bw=W/n;let g="";
-  keys.forEach((k,i)=>{const v=c.months[k];if(!v)return;const hp=v.paid/max*(H-14),ho=v.out/max*(H-14);
-    g+=`<rect x="${i*bw+bw*.15}" y="${H-4-hp}" width="${bw*.7}" height="${hp}" rx="1.5" fill="var(--paid)"><title>${mLabel(k)} ${money(v.paid)}</title></rect>`;
-    if(ho)g+=`<rect x="${i*bw+bw*.15}" y="${H-4-hp-ho}" width="${bw*.7}" height="${ho}" rx="1.5" fill="var(--unpaid)"><title>${mLabel(k)} ${money(v.out)} unpaid</title></rect>`});
-  g+=`<line x1="0" x2="${W}" y1="${H-3.5}" y2="${H-3.5}" stroke="var(--line)"/>`;
-  return`<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Monthly payments">${g}</svg><div class="cstats"><span>${mLabel(c.first)}</span><span style="margin-left:auto">${mLabel(c.last)}</span></div>`;
+  const dots=keys.map(k=>{const v=c.months[k];if(!v)return`<i class="sd none" title="${mLabel(k)} · no work"></i>`;const cl=v.out&&v.paid?"part":v.out?"out":"paid";return`<i class="sd ${cl}" title="${mLabel(k)} · ${v.out?money(v.out)+" unpaid":money(v.paid)+" paid"}"></i>`}).join("");
+  return`<div class="sdots" aria-label="Monthly payments">${dots}</div><div class="cstats"><span>${mLabel(c.first)}</span><span style="margin-left:auto">${mLabel(c.last)}</span></div>`;
 }
 const INDUSTRIES=["Restaurants","Fitness","Contractor","Sports","Medical","Spa / Beauty","Events","Hospitality","Real estate","Media","Website","Other"];
 const IND_MAP={"Restaurant & food":"Restaurants","Contractor & home":"Contractor","Fitness & wellness":"Fitness","Sports & clubs":"Sports","Health & medical":"Medical","Hospitality & travel":"Hospitality","Media & creators":"Media","Retail & brands":"Other"};
