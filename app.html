@@ -1124,7 +1124,7 @@ function clientDetail(c,all){
       ${f("email","Email","name@company.com")}${f("link","Website / Instagram","@handle or site")}
       ${f("service","Service / package","e.g. 4 reels + 1 shoot a month")}${f("fee","Monthly fee","$")}
       <label>Pays<select id="cf-${sk}-due" data-cf="due" ${ro}><option value="" ${!m.due?"selected":""}>When invoiced</option><option value="first" ${m.due==="first"?"selected":""}>1st of each month</option><option value="eom" ${m.due==="eom"?"selected":""}>End of month / 1st of next</option></select></label>
-      <label>Payment method<select id="cf-${sk}-pay" data-cf="pay" ${ro}>${["","E-transfer","Cash","Cheque","Invoice","Card"].map(o=>`<option value="${o}" ${(m.pay||"")===o?"selected":""}>${o||"Choose…"}</option>`).join("")}</select></label>
+      <label>Payment method<select id="cf-${sk}-pay" data-cf="pay" ${ro}>${["","E-transfer","Bank transfer","Cash","Cheque","Invoice","Card"].map(o=>`<option value="${o}" ${(m.pay||"")===o?"selected":""}>${o||"Choose…"}</option>`).join("")}</select></label>
       <label>List<select id="cf-${sk}-type" data-cf="type" ${ro}><option value="auto" ${!m.type||m.type==="auto"?"selected":""}>Auto (${TYPE_LABEL[c.auto]})</option>${Object.entries(TYPE_LABEL).map(([v,l])=>`<option value="${v}" ${m.type===v?"selected":""}>${l}</option>`).join("")}</select></label>
       <label>Industry<select id="cf-${sk}-industry" data-cf="industry" ${ro}><option value="">Choose…</option>${INDUSTRIES.map(o=>`<option ${m.industry===o?"selected":""}>${o}</option>`).join("")}</select></label>
       <label>Lead source<select id="cf-${sk}-source" data-cf="source" ${ro}><option value="">Choose…</option>${SOURCES.map(o=>`<option ${m.source===o?"selected":""}>${o}</option>`).join("")}</select></label>
