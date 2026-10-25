@@ -1142,6 +1142,7 @@ function renderTopClients(all){const host=$("#top-list");if(!host)return;const T
   $("#top-tot").textContent=tot?`${Math.round(t10/tot*100)}% of all revenue`:"";
   host.innerHTML=V.map((c,i)=>`<button class="irow" type="button" data-topopen="${esc(c.key)}"><span class="in"><span style="color:var(--muted);font-family:var(--mono);margin-right:8px">${i+1}</span>${esc(c.name)}</span><span class="ibar"><i style="width:${(c.paid/mx*100).toFixed(1)}%"></i></span><span class="iv">${money(c.paid)}<small>${c.count} month${c.count===1?"":"s"} · ${c.first===c.last?mLabel(c.first):mLabel(c.first)+" – "+mLabel(c.last)}</small></span></button>`).join("")+(T.length>5?`<button class="cmore" type="button" data-topmore>${open?"− Show less":`+ Show ${T.length-5} more`}</button>`:"")}
 document.addEventListener("click",e=>{if(e.target.closest("[data-topmore]")){state.topOpen=!state.topOpen;renderClients();return}const b=e.target.closest("[data-topopen]");if(!b)return;state.openClient=b.dataset.topopen;renderClients();const r=document.querySelector(".clist-wrap");if(r)r.scrollIntoView({behavior:"smooth",block:"start"})});
+document.addEventListener("click",e=>{if(!e.target.closest("[data-indmore]"))return;state.indOpen=!state.indOpen;renderClients()});
 function renderClients(){
   if(!$("#cl-active"))return;
   const all=buildClients(),q=($("#csearch").value||"").trim().toLowerCase();
@@ -1164,7 +1165,7 @@ function renderClients(){
   const mrr=act.reduce((s,c)=>{const v=c.months[c.last];return s+(v?v.paid+v.out:0)},0);
   const by={};all.forEach(c=>{const k=metaOf(c.key).industry||"Untagged";const b=by[k]||(by[k]={n:0,paid:0,mrr:0,act:0});b.n++;b.paid+=c.paid;if(c.type==="active"){b.act++;b.mrr+=monthly(c)}});
   const rows=Object.entries(by).sort((a,b)=>(a[0]==="Untagged")-(b[0]==="Untagged")||b[1].paid-a[1].paid),mx=Math.max(...rows.map(r=>r[1].paid),1);
-  $("#ind-list").innerHTML=rows.map(([k,b])=>`<button class="irow ${state.cind===k?"on":""}" data-cind="${esc(k)}"><span class="in">${esc(k)}</span><span class="ibar"><i style="width:${(b.paid/mx*100).toFixed(1)}%"></i></span><span class="iv">${money(b.paid)}<small>${b.n} client${b.n>1?"s":""}${b.act?` · ${money(b.mrr)}/mo now`:""} · avg ${money(b.paid/b.n)}</small></span></button>`).join("");
+  $("#ind-list").innerHTML=(state.indOpen?rows:rows.filter((r,ix)=>ix<5||r[0]===state.cind)).map(([k,b])=>`<button class="irow ${state.cind===k?"on":""}" data-cind="${esc(k)}"><span class="in">${esc(k)}</span><span class="ibar"><i style="width:${(b.paid/mx*100).toFixed(1)}%"></i></span><span class="iv">${money(b.paid)}<small>${b.n} client${b.n>1?"s":""}${b.act?` · ${money(b.mrr)}/mo now`:""} · avg ${money(b.paid/b.n)}</small></span></button>`).join("")+(rows.length>5?`<button class="cmore" type="button" data-indmore>${state.indOpen?"− Show less":`+ Show ${rows.length-5} more`}</button>`:"");
   $("#ind-clear").hidden=!state.cind;
   const bs={};all.forEach(c=>{const k=metaOf(c.key).source||"Unknown";const b=bs[k]||(bs[k]={n:0,paid:0,mrr:0,act:0});b.n++;b.paid+=c.paid;if(c.type==="active"){b.act++;b.mrr+=monthly(c)}});
   const srows=Object.entries(bs).sort((a,b)=>(a[0]==="Unknown")-(b[0]==="Unknown")||b[1].paid-a[1].paid),smx=Math.max(...srows.map(r=>r[1].paid),1);
