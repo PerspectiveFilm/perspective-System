@@ -357,6 +357,14 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-col.p-over{border-color:var(--sc,var(--accent));background:var(--soft)}
 .p-ghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(2deg) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:.95}
 #pf .p-empty{font-size:12.5px;color:var(--muted);padding:8px 4px}
+#pf .ck-er{display:flex;align-items:center;gap:6px;padding:4px 0}
+#pf .ck-ren{flex:1;min-width:0;font:inherit;font-size:13.5px;color:var(--ink);background:var(--soft);border:1px solid transparent;border-radius:8px;padding:6px 8px}
+#pf .ck-ren:focus{outline:none;border-color:var(--muted)}
+#pf .ck-mv{display:inline-flex;gap:2px}
+#pf .ck-mv button{font:inherit;font-size:12px;width:22px;height:24px;border:0;border-radius:6px;background:var(--soft);color:var(--muted);cursor:pointer;padding:0}
+#pf .ck-mv button:disabled{opacity:.3;cursor:default}
+#pf .ck-rep{flex:none;font:inherit;font-size:11px;font-weight:600;border-radius:999px;padding:4px 9px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+#pf .ck-rep[aria-pressed="true"]{color:var(--paid);border-color:color-mix(in srgb,var(--paid) 50%,transparent)}
 #pf .ck-fx{width:22px;flex:none}
 #pf .d-tot.d-later{opacity:.6;border-top:0;padding-top:2px}
 #pf .d-tot.d-later b{color:var(--muted)}
@@ -633,7 +641,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
     </section>
 
     <section>
-      <div class="sec-h"><h2 id="ck-title">Retainer checklist</h2><span class="ck-date" id="ck-date"></span></div>
+      <div class="sec-h"><h2 id="ck-title">Retainer checklist</h2><div style="display:flex;gap:8px;align-items:center"><span class="ck-date" id="ck-date"></span><button class="btn ghost" id="ck-edit" type="button">Edit</button></div></div>
       <div class="ck-bar"><i id="ck-bar"></i></div>
       <div class="ck-grid" id="ck-list"></div>
     </section>
@@ -1945,20 +1953,22 @@ function ckSave(mk){const d=state.check[mk]||{};if(!db){try{localStorage.setItem
 function ckClients(mk){const m=state.months[mk];if(!m)return[];const tm=grpMap(),seen=new Map();
   (m.clients||[]).forEach(x=>{if(x.status==="tax"||!x.name)return;const g=grpOf(x,tm);if(g!=="mkt"&&g!=="con")return;const k=clientKey(x.name);if(!seen.has(k))seen.set(k,{k,name:metaOf(k).name||cleanName(x.name),g})});
   ((state.check||{})._extra||{list:[]}).list.forEach(x=>{if(x&&x.k&&!seen.has(x.k))seen.set(x.k,{k:x.k,name:metaOf(x.k).name||x.name,g:x.g||"mkt",extra:true})});
-  return[...seen.values()]}
+  const O=((state.check||{})._order||{}).list||[],ix=k=>{const i=O.indexOf(k);return i<0?1e9:i};return[...seen.values()].map((c,i)=>({...c,_i:i})).sort((a,b)=>ix(a.k)-ix(b.k)||a._i-b._i)}
 const CK_FIXED=["Scheduling","Ask for shoot date","Shooting","Edit the content"];
 const CK_CLIENT_FIXED={tiarres:["Send {next} calendar","Send shoot plan"]};
 const ckFixedFor=(mk,k)=>{const nx=MONTHS[(+mk.slice(5,7))%12];return CK_FIXED.concat((CK_CLIENT_FIXED[slug(k)]||[]).map(t=>t.replace("{next}",nx)))};
 const ckIsExtraClient=(mk,k)=>{const L=((state.check||{})._extra||{list:[]}).list||[];return L.some(x=>x&&x.k===k)&&!ckClients(mk).some(c=>c.k===k&&!c.extra)};
 function ckTasks(mk,k){const s=slug(k),c=(state.check[mk]||{})[s];if(c&&Array.isArray(c.tasks))return c.tasks;
   const prev=Object.keys(state.check||{}).filter(x=>x<mk&&x!=="_extra"&&state.check[x]&&state.check[x][s]&&Array.isArray(state.check[x][s].tasks)).sort().pop();
-  const carry=prev?state.check[prev][s].tasks.filter(x=>!x.fx&&!x.done&&(state.check[prev][s].v2||ckIsExtraClient(mk,k))).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})})):[];
+  const P=prev?state.check[prev][s]:null,nx=MONTHS[(+mk.slice(5,7))%12];
+  const carry=P?P.tasks.filter(x=>!x.fx&&!x.done&&(P.v2||ckIsExtraClient(mk,k))).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})})):[];
+  if(P&&P.v2&&P.ed)return[...P.tasks.filter(x=>x.fx).map(x=>({t:x.tpl?x.tpl.replace("{next}",nx):x.t,done:false,fx:true,...(x.tpl?{tpl:x.tpl}:{})})),...carry];
   if(ckIsExtraClient(mk,k))return carry;
-  return[...ckFixedFor(mk,k).map(t=>({t,done:false,fx:true})),...carry]}
+  return[...ckFixedFor(mk,k).map((t,ii)=>({t,done:false,fx:true,...(((CK_CLIENT_FIXED[s]||[]).find(z=>z.replace("{next}",nx)===t))?{tpl:(CK_CLIENT_FIXED[s]||[]).find(z=>z.replace("{next}",nx)===t)}:{})})),...carry]}
 function ckMigrate(mk){const d=state.check[mk];if(!d)return false;let ch=false;
   for(const c of ckClients(mk)){const s=slug(c.k),e=d[s];if(!e||!Array.isArray(e.tasks))continue;
     if(c.extra){if(!e.v2){d[s]={...e,v2:true};ch=true}continue}
-    const FX=ckFixedFor(mk,c.k);if(e.v2&&FX.every(t=>e.tasks.some(x=>x.fx&&x.t===t)))continue;
+    const FX=ckFixedFor(mk,c.k);if(e.v2&&(e.ed||FX.every(t=>e.tasks.some(x=>x.fx&&x.t===t))))continue;
     const T=e.tasks,has=n=>T.find(x=>x.t.toLowerCase()===n.toLowerCase()),dn=n=>!!(has(n)&&has(n).done);
     const done={"Scheduling":dn("Scheduling")||dn("Schedule / ask for shoot date"),"Ask for shoot date":dn("Ask for shoot date")||dn("Schedule / ask for shoot date"),"Shooting":dn("Shooting"),"Edit the content":dn("Edit the content")};
     const skip=new Set(["scheduling","ask for shoot date","schedule / ask for shoot date",...FX.map(t=>t.toLowerCase())]);
@@ -1966,8 +1976,17 @@ function ckMigrate(mk){const d=state.check[mk];if(!d)return false;let ch=false;
     d[s]={key:c.k,v2:true,tasks:[...FX.map(t=>({t,done:done[t]!=null?done[t]:dn(t),fx:true,...((has(t)||{}).u?{u:true}:{})})),...extras]};ch=true}
   return ch}
 (function(){const n=new Date(),nx=new Date(n.getFullYear(),n.getMonth()+1,1,0,0,5),ms=nx-n;if(ms>0&&ms<2147483000)setTimeout(()=>location.reload(),ms)})();
+function ckSaveOrder(){if(!db){try{localStorage.setItem("pf-check",JSON.stringify(state.check))}catch(e){}return}db.doc("checklist/_order").set(state.check._order||{list:[]}).catch(flagErr)}
+function ckEditMut(k,fn){const mk=nowKey(),d=state.check[mk]=JSON.parse(JSON.stringify(state.check[mk]||{})),s2=slug(k);const T=ckTasks(mk,k).map(x=>({...x}));fn(T);d[s2]={...(d[s2]||{}),key:k,v2:true,ed:true,tasks:T};ckSave(mk);renderCheck()}
+document.addEventListener("click",e=>{const t=e.target;let b;
+  if(t.closest("#ck-edit")){state.ckEdit=!state.ckEdit;renderCheck();return}
+  if(!state.canEdit)return;
+  if(b=t.closest("[data-ckmv]")){const i=+b.dataset.ti,d=+b.dataset.d;ckEditMut(b.dataset.ckmv,T=>{const j=i+d;if(j<0||j>=T.length)return;[T[i],T[j]]=[T[j],T[i]]});return}
+  if(b=t.closest("[data-ckrep]")){const i=+b.dataset.ti;ckEditMut(b.dataset.ckrep,T=>{const x=T[i];if(!x)return;if(x.fx){delete x.fx;delete x.tpl}else x.fx=true});return}
+  if(b=t.closest("[data-ckcmv]")){const mk=nowKey(),L=ckClients(mk).map(c=>c.k),i=L.indexOf(b.dataset.ckcmv),j=i+(+b.dataset.d);if(i<0||j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];state.check={...state.check,_order:{list:L}};ckSaveOrder();renderCheck()}});
+document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.ckren==null||!state.canEdit)return;const v=el.value.trim(),i=+el.dataset.ti;if(!v)return;ckEditMut(el.dataset.ckren,T=>{if(T[i]){T[i].t=v;delete T[i].tpl}})});
 function renderCheck(){
-  const host=$("#ck-list");if(!host)return;const now=new Date(),mk=nowKey(),dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),day=now.getDate();
+  const host=$("#ck-list");if(!host)return;if(host.contains(document.activeElement)&&document.activeElement.dataset&&document.activeElement.dataset.ckren!=null)return;const eb=$("#ck-edit");if(eb){eb.hidden=!state.canEdit;eb.textContent=state.ckEdit?"Done":"Edit"}const now=new Date(),mk=nowKey(),dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),day=now.getDate();
   const t=dim>1?(day-1)/(dim-1):1,col=`hsl(${Math.round(130*(1-t))} 60% 52%)`;
   $("#ck-title").textContent=FULL[curIdx]+" checklist";
   const dt=$("#ck-date");dt.textContent=now.toLocaleDateString("en-CA",{month:"long",day:"numeric"});dt.style.background=col;
@@ -1977,8 +1996,8 @@ function renderCheck(){
   if(state.canEdit&&ckMigrate(mk))ckSave(mk);
   const ed=state.canEdit;
   host.innerHTML=C.map(c=>{const T=ckTasks(mk,c.k),n=T.filter(x=>x.done).length;
-    return`<div class="ck-card ${n===T.length&&T.length?"done":""}"><div class="ck-h"><b>${esc(c.name)}</b><span>${c.g==="con"?"Content":"Marketing"} · <em>${n}/${T.length}</em>${c.extra&&ed?`<button class="x ck-rm" data-ckrm="${esc(c.k)}" title="Remove client from checklist" aria-label="Remove client">×</button>`:""}</span></div>
-    ${T.map((x,ti)=>`<label class="ck-t ${x.u&&!x.done?"urg":""}">${ed?`<button class="ck-u" type="button" data-cku="${esc(c.k)}" data-ti="${ti}" aria-pressed="${!!x.u}" title="${x.u?"Not urgent":"Mark urgent"}" aria-label="Mark urgent">!</button>`:""}<input type="checkbox" data-ck="${esc(c.k)}" data-ti="${ti}" ${x.done?"checked":""} ${ed?"":"disabled"}><span>${esc(x.t)}</span>${ed?`${x.fx?`<span class="ck-fx" title="Resets on the 1st"></span>`:`<button class="x" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Remove task">×</button>`}`:""}</label>`).join("")}
+    return`<div class="ck-card ${n===T.length&&T.length?"done":""}"><div class="ck-h"><b>${state.ckEdit&&ed?`<span class="ck-mv"><button type="button" data-ckcmv="${esc(c.k)}" data-d="-1" aria-label="Move client up">↑</button><button type="button" data-ckcmv="${esc(c.k)}" data-d="1" aria-label="Move client down">↓</button></span> `:""}${esc(c.name)}</b><span>${c.g==="con"?"Content":"Marketing"} · <em>${n}/${T.length}</em>${c.extra&&ed?`<button class="x ck-rm" data-ckrm="${esc(c.k)}" title="Remove client from checklist" aria-label="Remove client">×</button>`:""}</span></div>
+    ${state.ckEdit&&ed?T.map((x,ti)=>`<div class="ck-er"><span class="ck-mv"><button type="button" data-ckmv="${esc(c.k)}" data-ti="${ti}" data-d="-1" ${ti===0?"disabled":""} aria-label="Move up">↑</button><button type="button" data-ckmv="${esc(c.k)}" data-ti="${ti}" data-d="1" ${ti===T.length-1?"disabled":""} aria-label="Move down">↓</button></span><input class="ck-ren" value="${esc(x.t)}" data-ckren="${esc(c.k)}" data-ti="${ti}" aria-label="Task name"><button type="button" class="ck-rep" data-ckrep="${esc(c.k)}" data-ti="${ti}" aria-pressed="${!!x.fx}" title="${x.fx?"Repeats every month — click to make one-time":"One-time — click to repeat every month"}">${x.fx?"↻ Monthly":"One-time"}</button><button class="x" type="button" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Delete task">×</button></div>`).join(""):T.map((x,ti)=>`<label class="ck-t ${x.u&&!x.done?"urg":""}">${ed?`<button class="ck-u" type="button" data-cku="${esc(c.k)}" data-ti="${ti}" aria-pressed="${!!x.u}" title="${x.u?"Not urgent":"Mark urgent"}" aria-label="Mark urgent">!</button>`:""}<input type="checkbox" data-ck="${esc(c.k)}" data-ti="${ti}" ${x.done?"checked":""} ${ed?"":"disabled"}><span>${esc(x.t)}</span>${ed?`${x.fx?`<span class="ck-fx" title="Resets on the 1st"></span>`:`<button class="x" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Remove task">×</button>`}`:""}</label>`).join("")}
     ${ed?`<form class="ck-add" data-ckadd="${esc(c.k)}"><input placeholder="Add task" aria-label="Add task for ${esc(c.name)}"><button aria-label="Add">+</button></form>`:""}</div>`}).join("")+(ed?`<form class="ck-card ck-newc" id="ck-newc"><input id="ck-newc-n" placeholder="+ Add client" aria-label="Add client to checklist"><select id="ck-newc-g" aria-label="Type"><option value="mkt">Marketing</option><option value="con">Content</option></select><button class="btn">Add</button></form>`:"");
 }
 function ckSaveExtra(){if(!db){try{localStorage.setItem("pf-check",JSON.stringify(state.check))}catch(e){}return}db.doc("checklist/_extra").set(state.check._extra||{list:[]}).catch(flagErr)}
@@ -1986,10 +2005,10 @@ document.addEventListener("submit",e=>{if(e.target.id!=="ck-newc")return;e.preve
   state.check={...state.check,_extra:{list:[...(((state.check||{})._extra||{}).list||[]).filter(x=>x.k!==k),{k,name:n,g:$("#ck-newc-g").value}]}};ckSaveExtra();renderCheck();const i=$("#ck-newc-n");if(i)i.focus()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ckrm]");if(!b||!state.canEdit)return;if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Remove?";b.classList.add("armed");setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="×";b.classList.remove("armed")}},3000);return}
   state.check={...state.check,_extra:{list:(((state.check||{})._extra||{}).list||[]).filter(x=>x.k!==b.dataset.ckrm)}};ckSaveExtra();renderCheck()});
-function ckMutate(k,fn){const mk=nowKey(),d=state.check[mk]=JSON.parse(JSON.stringify(state.check[mk]||{})),s=slug(k);const T=ckTasks(mk,k).map(x=>({...x}));fn(T);d[s]={key:k,v2:true,tasks:T};ckSave(mk);renderCheck()}
-document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.ck==null||!state.canEdit)return;ckMutate(el.dataset.ck,T=>{const i=+el.dataset.ti,x=T[i];if(!x)return;const fixedName=CK_FIXED.concat(["Scheduling","Ask for shoot date"]).some(n=>n.toLowerCase()===String(x.t).toLowerCase());if(!x.fx&&(!fixedName||ckIsExtraClient(nowKey(),el.dataset.ck))&&el.checked){T.splice(i,1);return}x.done=el.checked})});
+function ckMutate(k,fn){const mk=nowKey(),d=state.check[mk]=JSON.parse(JSON.stringify(state.check[mk]||{})),s=slug(k);const T=ckTasks(mk,k).map(x=>({...x}));fn(T);d[s]={...(d[s]||{}),key:k,v2:true,tasks:T};ckSave(mk);renderCheck()}
+document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.ck==null||!state.canEdit)return;ckMutate(el.dataset.ck,T=>{const i=+el.dataset.ti,x=T[i];if(!x)return;const fixedName=CK_FIXED.concat(["Scheduling","Ask for shoot date"]).some(n=>n.toLowerCase()===String(x.t).toLowerCase());const ed0=((state.check[nowKey()]||{})[slug(el.dataset.ck)]||{}).ed;if(!x.fx&&(!fixedName||ed0||ckIsExtraClient(nowKey(),el.dataset.ck))&&el.checked){T.splice(i,1);return}x.done=el.checked})});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-cku]");if(!b||!state.canEdit)return;e.preventDefault();ckMutate(b.dataset.cku,T=>{const x=T[+b.dataset.ti];if(x){if(x.u)delete x.u;else x.u=true}})});
-document.addEventListener("click",e=>{const b=e.target.closest("[data-ckdel]");if(!b||!state.canEdit)return;e.preventDefault();ckMutate(b.dataset.ckdel,T=>T.splice(+b.dataset.ti,1))});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ckdel]");if(!b||!state.canEdit)return;e.preventDefault();if(state.ckEdit){ckEditMut(b.dataset.ckdel,T=>T.splice(+b.dataset.ti,1));return}ckMutate(b.dataset.ckdel,T=>T.splice(+b.dataset.ti,1))});
 document.addEventListener("submit",e=>{const f=e.target.closest("[data-ckadd]");if(!f)return;e.preventDefault();if(!state.canEdit)return;const v=f.querySelector("input").value.trim();if(!v)return;
   ckMutate(f.dataset.ckadd,T=>T.push({t:v,done:false}));const nf=document.querySelector(`[data-ckadd="${CSS.escape(f.dataset.ckadd)}"] input`);if(nf)nf.focus()});
 
