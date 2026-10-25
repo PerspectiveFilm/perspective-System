@@ -1962,7 +1962,7 @@ function ckMigrate(mk){const d=state.check[mk];if(!d)return false;let ch=false;
     const T=e.tasks,has=n=>T.find(x=>x.t.toLowerCase()===n.toLowerCase()),dn=n=>!!(has(n)&&has(n).done);
     const done={"Scheduling":dn("Scheduling")||dn("Schedule / ask for shoot date"),"Ask for shoot date":dn("Ask for shoot date")||dn("Schedule / ask for shoot date"),"Shooting":dn("Shooting"),"Edit the content":dn("Edit the content")};
     const skip=new Set(["scheduling","ask for shoot date","schedule / ask for shoot date",...FX.map(t=>t.toLowerCase())]);
-    const extras=T.filter(x=>!skip.has(x.t.toLowerCase())&&!x.fx&&!x.done).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})}));
+    const extras=T.filter(x=>!skip.has(x.t.toLowerCase())&&(!x.fx||/^deliver the content$/i.test(x.t))&&!x.done).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})}));
     d[s]={key:c.k,v2:true,tasks:[...FX.map(t=>({t,done:done[t]!=null?done[t]:dn(t),fx:true,...((has(t)||{}).u?{u:true}:{})})),...extras]};ch=true}
   return ch}
 (function(){const n=new Date(),nx=new Date(n.getFullYear(),n.getMonth()+1,1,0,0,5),ms=nx-n;if(ms>0&&ms<2147483000)setTimeout(()=>location.reload(),ms)})();
