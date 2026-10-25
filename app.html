@@ -1946,7 +1946,7 @@ function ckClients(mk){const m=state.months[mk];if(!m)return[];const tm=grpMap()
   (m.clients||[]).forEach(x=>{if(x.status==="tax"||!x.name)return;const g=grpOf(x,tm);if(g!=="mkt"&&g!=="con")return;const k=clientKey(x.name);if(!seen.has(k))seen.set(k,{k,name:metaOf(k).name||cleanName(x.name),g})});
   ((state.check||{})._extra||{list:[]}).list.forEach(x=>{if(x&&x.k&&!seen.has(x.k))seen.set(x.k,{k:x.k,name:metaOf(x.k).name||x.name,g:x.g||"mkt",extra:true})});
   return[...seen.values()]}
-const CK_FIXED=["Schedule / ask for shoot date","Shooting","Edit the content","Deliver the content"];
+const CK_FIXED=["Scheduling","Ask for shoot date","Shooting","Edit the content"];
 const CK_CLIENT_FIXED={tiarres:["Send {next} calendar","Send shoot plan"]};
 const ckFixedFor=(mk,k)=>{const nx=MONTHS[(+mk.slice(5,7))%12];return CK_FIXED.concat((CK_CLIENT_FIXED[slug(k)]||[]).map(t=>t.replace("{next}",nx)))};
 const ckIsExtraClient=(mk,k)=>{const L=((state.check||{})._extra||{list:[]}).list||[];return L.some(x=>x&&x.k===k)&&!ckClients(mk).some(c=>c.k===k&&!c.extra)};
@@ -1960,8 +1960,8 @@ function ckMigrate(mk){const d=state.check[mk];if(!d)return false;let ch=false;
     if(c.extra){if(!e.v2){d[s]={...e,v2:true};ch=true}continue}
     const FX=ckFixedFor(mk,c.k);if(e.v2&&FX.every(t=>e.tasks.some(x=>x.fx&&x.t===t)))continue;
     const T=e.tasks,has=n=>T.find(x=>x.t.toLowerCase()===n.toLowerCase()),dn=n=>!!(has(n)&&has(n).done);
-    const done={"Schedule / ask for shoot date":dn("Scheduling")||dn("Ask for shoot date")||dn("Schedule / ask for shoot date"),"Shooting":dn("Shooting"),"Edit the content":dn("Edit the content"),"Deliver the content":dn("Deliver the content")};
-    const skip=new Set(["scheduling","ask for shoot date",...FX.map(t=>t.toLowerCase())]);
+    const done={"Scheduling":dn("Scheduling")||dn("Schedule / ask for shoot date"),"Ask for shoot date":dn("Ask for shoot date")||dn("Schedule / ask for shoot date"),"Shooting":dn("Shooting"),"Edit the content":dn("Edit the content")};
+    const skip=new Set(["scheduling","ask for shoot date","schedule / ask for shoot date",...FX.map(t=>t.toLowerCase())]);
     const extras=T.filter(x=>!skip.has(x.t.toLowerCase())&&!x.fx&&!x.done).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})}));
     d[s]={key:c.k,v2:true,tasks:[...FX.map(t=>({t,done:done[t]!=null?done[t]:dn(t),fx:true,...((has(t)||{}).u?{u:true}:{})})),...extras]};ch=true}
   return ch}
