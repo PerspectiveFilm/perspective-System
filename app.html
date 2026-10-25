@@ -357,6 +357,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-col.p-over{border-color:var(--sc,var(--accent));background:var(--soft)}
 .p-ghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(2deg) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:.95}
 #pf .p-empty{font-size:12.5px;color:var(--muted);padding:8px 4px}
+#pf .ck-fx{width:22px;flex:none}
 #pf .d-tot.d-later{opacity:.6;border-top:0;padding-top:2px}
 #pf .d-tot.d-later b{color:var(--muted)}
 #pf .ck-t.urg span{color:var(--unpaid);font-weight:600}
@@ -1945,9 +1946,23 @@ function ckClients(mk){const m=state.months[mk];if(!m)return[];const tm=grpMap()
   (m.clients||[]).forEach(x=>{if(x.status==="tax"||!x.name)return;const g=grpOf(x,tm);if(g!=="mkt"&&g!=="con")return;const k=clientKey(x.name);if(!seen.has(k))seen.set(k,{k,name:metaOf(k).name||cleanName(x.name),g})});
   ((state.check||{})._extra||{list:[]}).list.forEach(x=>{if(x&&x.k&&!seen.has(x.k))seen.set(x.k,{k:x.k,name:metaOf(x.k).name||x.name,g:x.g||"mkt",extra:true})});
   return[...seen.values()]}
+const CK_FIXED=["Schedule / ask for shoot date","Shooting","Edit the content","Deliver the content"];
+const ckIsExtraClient=(mk,k)=>{const L=((state.check||{})._extra||{list:[]}).list||[];return L.some(x=>x&&x.k===k)&&!ckClients(mk).some(c=>c.k===k&&!c.extra)};
 function ckTasks(mk,k){const s=slug(k),c=(state.check[mk]||{})[s];if(c&&Array.isArray(c.tasks))return c.tasks;
-  const prev=Object.keys(state.check||{}).filter(x=>x<mk&&state.check[x]&&state.check[x][s]&&Array.isArray(state.check[x][s].tasks)).sort().pop();
-  return(prev?state.check[prev][s].tasks.map(x=>x.t):CK_DEFAULT).map(t=>({t,done:false}))}
+  const prev=Object.keys(state.check||{}).filter(x=>x<mk&&x!=="_extra"&&state.check[x]&&state.check[x][s]&&Array.isArray(state.check[x][s].tasks)).sort().pop();
+  const carry=prev?state.check[prev][s].tasks.filter(x=>!x.fx&&!x.done&&(state.check[prev][s].v2||ckIsExtraClient(mk,k))).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})})):[];
+  if(ckIsExtraClient(mk,k))return carry;
+  return[...CK_FIXED.map(t=>({t,done:false,fx:true})),...carry]}
+function ckMigrate(mk){const d=state.check[mk];if(!d)return false;let ch=false;
+  for(const c of ckClients(mk)){const s=slug(c.k),e=d[s];if(!e||!Array.isArray(e.tasks)||e.v2)continue;
+    if(c.extra){d[s]={...e,v2:true};ch=true;continue}
+    const T=e.tasks,has=n=>T.find(x=>x.t.toLowerCase()===n.toLowerCase()),dn=n=>!!(has(n)&&has(n).done);
+    const done={"Schedule / ask for shoot date":dn("Scheduling")||dn("Ask for shoot date")||dn("Schedule / ask for shoot date"),"Shooting":dn("Shooting"),"Edit the content":dn("Edit the content"),"Deliver the content":dn("Deliver the content")};
+    const skip=new Set(["scheduling","ask for shoot date","schedule / ask for shoot date","shooting","edit the content","deliver the content"]);
+    const extras=T.filter(x=>!skip.has(x.t.toLowerCase())&&!x.done).map(x=>({t:x.t,done:false,...(x.u?{u:true}:{})}));
+    d[s]={key:c.k,v2:true,tasks:[...CK_FIXED.map(t=>({t,done:done[t],fx:true,...((has(t)||{}).u?{u:true}:{})})),...extras]};ch=true}
+  return ch}
+(function(){const n=new Date(),nx=new Date(n.getFullYear(),n.getMonth()+1,1,0,0,5),ms=nx-n;if(ms>0&&ms<2147483000)setTimeout(()=>location.reload(),ms)})();
 function renderCheck(){
   const host=$("#ck-list");if(!host)return;const now=new Date(),mk=nowKey(),dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(),day=now.getDate();
   const t=dim>1?(day-1)/(dim-1):1,col=`hsl(${Math.round(130*(1-t))} 60% 52%)`;
@@ -1956,11 +1971,11 @@ function renderCheck(){
   const bar=$("#ck-bar");bar.style.width=Math.round(day/dim*100)+"%";bar.style.background=col;
   if(!state.loaded){host.innerHTML=`<div class="ck-empty">Loading…</div>`;return}
   const C=ckClients(mk);
-  
+  if(state.canEdit&&ckMigrate(mk))ckSave(mk);
   const ed=state.canEdit;
   host.innerHTML=C.map(c=>{const T=ckTasks(mk,c.k),n=T.filter(x=>x.done).length;
     return`<div class="ck-card ${n===T.length&&T.length?"done":""}"><div class="ck-h"><b>${esc(c.name)}</b><span>${c.g==="con"?"Content":"Marketing"} · <em>${n}/${T.length}</em>${c.extra&&ed?`<button class="x ck-rm" data-ckrm="${esc(c.k)}" title="Remove client from checklist" aria-label="Remove client">×</button>`:""}</span></div>
-    ${T.map((x,ti)=>`<label class="ck-t ${x.u&&!x.done?"urg":""}"><input type="checkbox" data-ck="${esc(c.k)}" data-ti="${ti}" ${x.done?"checked":""} ${ed?"":"disabled"}><span>${esc(x.t)}</span>${ed?`<button class="ck-u" type="button" data-cku="${esc(c.k)}" data-ti="${ti}" aria-pressed="${!!x.u}" title="${x.u?"Not urgent":"Mark urgent"}" aria-label="Mark urgent">!</button><button class="x" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Remove task">×</button>`:""}</label>`).join("")}
+    ${T.map((x,ti)=>`<label class="ck-t ${x.u&&!x.done?"urg":""}"><input type="checkbox" data-ck="${esc(c.k)}" data-ti="${ti}" ${x.done?"checked":""} ${ed?"":"disabled"}><span>${esc(x.t)}</span>${ed?`<button class="ck-u" type="button" data-cku="${esc(c.k)}" data-ti="${ti}" aria-pressed="${!!x.u}" title="${x.u?"Not urgent":"Mark urgent"}" aria-label="Mark urgent">!</button>${x.fx?`<span class="ck-fx" title="Resets on the 1st"></span>`:`<button class="x" data-ckdel="${esc(c.k)}" data-ti="${ti}" aria-label="Remove task">×</button>`}`:""}</label>`).join("")}
     ${ed?`<form class="ck-add" data-ckadd="${esc(c.k)}"><input placeholder="Add task" aria-label="Add task for ${esc(c.name)}"><button aria-label="Add">+</button></form>`:""}</div>`}).join("")+(ed?`<form class="ck-card ck-newc" id="ck-newc"><input id="ck-newc-n" placeholder="+ Add client" aria-label="Add client to checklist"><select id="ck-newc-g" aria-label="Type"><option value="mkt">Marketing</option><option value="con">Content</option></select><button class="btn">Add</button></form>`:"");
 }
 function ckSaveExtra(){if(!db){try{localStorage.setItem("pf-check",JSON.stringify(state.check))}catch(e){}return}db.doc("checklist/_extra").set(state.check._extra||{list:[]}).catch(flagErr)}
@@ -1968,8 +1983,8 @@ document.addEventListener("submit",e=>{if(e.target.id!=="ck-newc")return;e.preve
   state.check={...state.check,_extra:{list:[...(((state.check||{})._extra||{}).list||[]).filter(x=>x.k!==k),{k,name:n,g:$("#ck-newc-g").value}]}};ckSaveExtra();renderCheck();const i=$("#ck-newc-n");if(i)i.focus()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ckrm]");if(!b||!state.canEdit)return;if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Remove?";b.classList.add("armed");setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="×";b.classList.remove("armed")}},3000);return}
   state.check={...state.check,_extra:{list:(((state.check||{})._extra||{}).list||[]).filter(x=>x.k!==b.dataset.ckrm)}};ckSaveExtra();renderCheck()});
-function ckMutate(k,fn){const mk=nowKey(),d=state.check[mk]=JSON.parse(JSON.stringify(state.check[mk]||{})),s=slug(k);const T=ckTasks(mk,k).map(x=>({...x}));fn(T);d[s]={key:k,tasks:T};ckSave(mk);renderCheck()}
-document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.ck==null||!state.canEdit)return;ckMutate(el.dataset.ck,T=>{const x=T[+el.dataset.ti];if(x)x.done=el.checked})});
+function ckMutate(k,fn){const mk=nowKey(),d=state.check[mk]=JSON.parse(JSON.stringify(state.check[mk]||{})),s=slug(k);const T=ckTasks(mk,k).map(x=>({...x}));fn(T);d[s]={key:k,v2:true,tasks:T};ckSave(mk);renderCheck()}
+document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.ck==null||!state.canEdit)return;ckMutate(el.dataset.ck,T=>{const i=+el.dataset.ti,x=T[i];if(!x)return;if(!x.fx&&el.checked){T.splice(i,1);return}x.done=el.checked})});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-cku]");if(!b||!state.canEdit)return;e.preventDefault();ckMutate(b.dataset.cku,T=>{const x=T[+b.dataset.ti];if(x){if(x.u)delete x.u;else x.u=true}})});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ckdel]");if(!b||!state.canEdit)return;e.preventDefault();ckMutate(b.dataset.ckdel,T=>T.splice(+b.dataset.ti,1))});
 document.addEventListener("submit",e=>{const f=e.target.closest("[data-ckadd]");if(!f)return;e.preventDefault();if(!state.canEdit)return;const v=f.querySelector("input").value.trim();if(!v)return;
