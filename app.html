@@ -686,6 +686,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
       <div class="kpis" id="client-kpis"></div>
       <div class="clist-wrap">
         <div class="card"><div class="list-h"><h3>ACTIVE RETAINERS</h3><span class="tag" id="cc-active"></span></div><div id="cl-active"></div></div>
+        <div class="card"><div class="list-h"><h3>ACTIVE PROJECTS</h3><span class="tag" id="cc-project"></span></div><div id="cl-project"></div></div>
         <div class="card"><div class="list-h"><h3>INACTIVE RETAINERS</h3><span class="tag" id="cc-inactive"></span></div><div id="cl-inactive"></div></div>
         <div class="card"><div class="list-h"><h3>ONE-TIME SHOOTS</h3><span class="tag" id="cc-oneoff"></span></div><div id="cl-oneoff"></div></div>
       </div>
@@ -1066,7 +1067,7 @@ const metaOf=k=>{const m=state.cmeta[slug(k)];if(!m)return{};if(m.industry&&IND_
 function clientKey(raw){let k=clientBase(raw),g=0;while(metaOf(k).mergeInto&&g++<10)k=metaOf(k).mergeInto;return k}
 const nowKey=()=>key(curIdx,YEAR);
 const prevKey=()=>curIdx>0?key(curIdx-1,YEAR):key(11,YEAR-1);
-const mLabel=k=>{const[y,m]=k.split("-");return MONTHS[+m-1]+" "+y};
+const mLabel=k=>{if(!k)return"—";const[y,m]=k.split("-");return MONTHS[+m-1]+" "+y};
 function buildClients(){
   const agg={};const nk=nowKey();
   for(const mk of Object.keys(state.months).sort()){
@@ -1089,7 +1090,7 @@ function buildClients(){
     const auto=ms.length>=3?(ms[ms.length-1]>=pk?"active":"inactive"):"oneoff";
     const t=metaOf(a.key).type;
     return{...a,al:(a.alN||0)>(a.caN||0),cty:metaOf(a.key).country||((a.alN||0)>(a.caN||0)?"AL":"CA"),name,ms,first:ms[0],last:ms[ms.length-1],count:ms.length,auto,type:t&&t!=="auto"?t:auto};
-  }).filter(c=>c.count>0);
+  }).filter(c=>c.count>0||c.type==="project").concat(Object.values(state.cmeta||{}).filter(m=>m&&m.type==="project"&&m.key&&!agg[m.key]).map(m=>({key:m.key,names:{},months:{},paid:0,out:0,bases:new Set(),al:m.country==="AL",cty:m.country||"CA",name:m.name||m.key,ms:[],first:null,last:null,count:0,auto:"oneoff",type:"project"})));
 }
 async function saveMeta(k,patch){
   const s=slug(k),cur={...metaOf(k)};
@@ -1098,7 +1099,7 @@ async function saveMeta(k,patch){
   if(!db){try{localStorage.setItem("pf-cmeta",JSON.stringify(state.cmeta))}catch(e){}return}
   try{await db.doc("clientMeta/"+s).set(cur)}catch(err){flagErr(err)}
 }
-function spark(c){
+function spark(c){if(!c.first)return"";
   const [fy,fm]=c.first.split("-").map(Number),[ly,lm]=c.last.split("-").map(Number);
   const keys=[];for(let y=fy,m=fm;y<ly||(y===ly&&m<=lm);m++){if(m>12){m=1;y++}if(y>ly||(y===ly&&m>lm))break;keys.push(`${y}-${String(m).padStart(2,"0")}`)}
   const dots=keys.map(k=>{const v=c.months[k];if(!v)return`<i class="sd none" title="${mLabel(k)} · no work"></i>`;const cl=v.out&&v.paid?"part":v.out?"out":"paid";return`<i class="sd ${cl}" title="${mLabel(k)} · ${v.out?money(v.out)+" unpaid":money(v.paid)+" paid"}"></i>`}).join("");
@@ -1107,7 +1108,7 @@ function spark(c){
 const INDUSTRIES=["Restaurants","Fitness","Contractor","Sports","Medical","Spa / Beauty","Events","Hospitality","Real estate","Media","Website","Other"];
 const IND_MAP={"Restaurant & food":"Restaurants","Contractor & home":"Contractor","Fitness & wellness":"Fitness","Sports & clubs":"Sports","Health & medical":"Medical","Hospitality & travel":"Hospitality","Media & creators":"Media","Retail & brands":"Other"};
 const SOURCES=["Referral","Instagram","TikTok","Meta ads","Google","Website","Walk-in","Cold outreach","Friends & network","Other"];
-const TYPE_LABEL={active:"Active retainer",inactive:"Inactive retainer",oneoff:"One-time shoot"};
+const TYPE_LABEL={active:"Active retainer",project:"Active project",inactive:"Inactive retainer",oneoff:"One-time shoot"};
 function clientDetail(c,all){
   const m=metaOf(c.key),ro=state.canEdit?"":"disabled",sk=slug(c.key);
   const years={};c.ms.forEach(k=>{const y=k.slice(0,4),v=c.months[k];years[y]=(years[y]||0)+v.paid});
@@ -1140,17 +1141,17 @@ function renderClients(){
   if(!$("#cl-active"))return;
   const all=buildClients(),q=($("#csearch").value||"").trim().toLowerCase();
   const ind=state.cind;const show=all.filter(c=>(!q||c.name.toLowerCase().includes(q)||c.key.includes(q))&&(!ind||(metaOf(c.key).industry||"Untagged")===ind)&&(!state.csrc||(metaOf(c.key).source||"Unknown")===state.csrc)&&(!state.ccty||c.cty===state.ccty));
-  const groups={active:[],inactive:[],oneoff:[]};
+  const groups={active:[],project:[],inactive:[],oneoff:[]};
   show.forEach(c=>groups[c.type]?.push(c));
   for(const[g,list]of Object.entries(groups)){
-    list.sort((a,b)=>g==="oneoff"?b.paid-a.paid:(monthly(b)-monthly(a))||(b.paid-a.paid));
+    list.sort((a,b)=>g==="oneoff"||g==="project"?b.paid-a.paid||a.name.localeCompare(b.name):(monthly(b)-monthly(a))||(b.paid-a.paid));
     const host=$("#cl-"+g);
     if(host.contains(document.activeElement)&&(document.activeElement.dataset.cf||document.activeElement.dataset.crename))continue;
-    $("#cc-"+g).textContent=g==="oneoff"?list.length:`${list.length} · ${money(list.reduce((a,c)=>a+monthly(c),0))}/mo${g==="inactive"?" lost":""}`;
+    $("#cc-"+g).textContent=g==="oneoff"||g==="project"?list.length:`${list.length} · ${money(list.reduce((a,c)=>a+monthly(c),0))}/mo${g==="inactive"?" lost":""}`;
     const lim=CL_LIMIT,full=q||ind||state.csrc||state.ccty||state.cexp[g]||list.length<=lim;const shown=full?list:list.filter((c,i)=>i<lim||c.key===state.openClient);
     const more=list.length>lim&&!q&&!ind&&!state.csrc&&!state.ccty?`<button class="cmore" data-cmore="${g}">${state.cexp[g]?"− Show less":`+ Show ${list.length-shown.length} more`}</button>`:"";
     host.innerHTML=(list.length?shown.map(c=>{const open=state.openClient===c.key;const dl=metaOf(c.key).drive;const ico=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>`;
-      return`<div class="crow-w">${dl&&/^https?:\/\//.test(dl)?`<a class="dlink" href="${esc(dl)}" target="_blank" rel="noopener" title="Open Google Drive folder" aria-label="Open ${esc(c.name)} Drive folder">${ico}</a>`:`<span class="dlink off" title="No Drive folder yet. Open the client to add one.">${ico}</span>`}${state.renaming===c.key?`<input class="crename" id="cr-${slug(c.key)}" data-crename="${esc(c.key)}" value="${esc(c.name)}" aria-label="Client name"><span></span><span></span><span></span><span></span>`:`<button class="crow" data-copen="${esc(c.key)}" aria-expanded="${open}"><span class="cn">${esc(c.name)}</span><span class="cm">${c.count} month${c.count>1?"s":""} · ${c.first===c.last?mLabel(c.first):mLabel(c.first)+" – "+mLabel(c.last)}</span><span class="ct">${g==="oneoff"?`${money(c.paid)}${c.out?`<small style="color:var(--unpaid)">${money(c.out)} unpaid</small>`:""}`:`<span class="mo">${money(monthly(c))}<i>/mo</i></span><small>${g==="inactive"?"was paying · ":""}${money(c.paid)} total${c.out?` · <span style="color:var(--unpaid)">${money(c.out)} unpaid</span>`:""}</small>`}</span></button>${true?(()=>{const set=metaOf(c.key).country,cur=set||(c.al?"AL":"CA");const elig=taxEligible(c.key),nt=!clientTaxed(c.key),tb=false?(state.canEdit?`<button class="taxb ${nt?"off":""}" data-tax="${esc(c.key)}" title="${nt?"No HST on this client · tap to add HST":"HST 13% added · tap for no tax"}">${nt?"No HST":"HST"}</button>`:`<span class="taxb ${nt?"off":""}">${nt?"No HST":"HST"}</span>`):"";return `<span class="fsel-w">`+(state.canEdit?`<select class="fsel ${set?"set":""}" id="fs-${slug(c.key)}" data-fset="${esc(c.key)}" aria-label="Country for ${esc(c.name)}" title="${set?"":"Guessed from your records. Pick to confirm."}"><option value="AL" ${cur==="AL"?"selected":""}>🇦🇱</option><option value="CA" ${cur==="CA"?"selected":""}>🇨🇦</option></select>`:`<span class="fsel set">${cur==="AL"?"🇦🇱":"🇨🇦"}</span>`)+tb+`</span>`})():"<span></span>"}${state.canEdit?`<select class="isel ${metaOf(c.key).industry?"set":""}" id="is-${slug(c.key)}" data-iset="${esc(c.key)}" aria-label="Industry for ${esc(c.name)}"><option value="">+ Industry</option>${INDUSTRIES.map(o=>`<option ${metaOf(c.key).industry===o?"selected":""}>${o}</option>`).join("")}</select><select class="isel ssel ${metaOf(c.key).source?"set":""}" id="ss-${slug(c.key)}" data-sset="${esc(c.key)}" aria-label="Lead source for ${esc(c.name)}"><option value="">+ Source</option>${SOURCES.map(o=>`<option ${metaOf(c.key).source===o?"selected":""}>${o}</option>`).join("")}</select>`:`<span class="isel set">${esc(metaOf(c.key).industry||"")}</span><span class="isel set">${esc(metaOf(c.key).source||"")}</span>`}${state.canEdit?`<button class="cedit" data-crenamebtn="${esc(c.key)}" aria-label="Rename ${esc(c.name)}" title="Rename">✎</button>`:"<span></span>"}`}</div>${open?clientDetail(c,all):""}`}).join(""):`<div class="empty">${state.loaded?(q?"No match.":"None yet."):"Loading…"}</div>`)+more;
+      return`<div class="crow-w">${dl&&/^https?:\/\//.test(dl)?`<a class="dlink" href="${esc(dl)}" target="_blank" rel="noopener" title="Open Google Drive folder" aria-label="Open ${esc(c.name)} Drive folder">${ico}</a>`:`<span class="dlink off" title="No Drive folder yet. Open the client to add one.">${ico}</span>`}${state.renaming===c.key?`<input class="crename" id="cr-${slug(c.key)}" data-crename="${esc(c.key)}" value="${esc(c.name)}" aria-label="Client name"><span></span><span></span><span></span><span></span>`:`<button class="crow" data-copen="${esc(c.key)}" aria-expanded="${open}"><span class="cn">${esc(c.name)}</span><span class="cm">${c.count?`${c.count} month${c.count>1?"s":""} · ${c.first===c.last?mLabel(c.first):mLabel(c.first)+" – "+mLabel(c.last)}`:esc(metaOf(c.key).service||"Project in progress")}</span><span class="ct">${g==="oneoff"||g==="project"?`${money(c.paid)}${c.out?`<small style="color:var(--unpaid)">${money(c.out)} unpaid</small>`:""}`:`<span class="mo">${money(monthly(c))}<i>/mo</i></span><small>${g==="inactive"?"was paying · ":""}${money(c.paid)} total${c.out?` · <span style="color:var(--unpaid)">${money(c.out)} unpaid</span>`:""}</small>`}</span></button>${true?(()=>{const set=metaOf(c.key).country,cur=set||(c.al?"AL":"CA");const elig=taxEligible(c.key),nt=!clientTaxed(c.key),tb=false?(state.canEdit?`<button class="taxb ${nt?"off":""}" data-tax="${esc(c.key)}" title="${nt?"No HST on this client · tap to add HST":"HST 13% added · tap for no tax"}">${nt?"No HST":"HST"}</button>`:`<span class="taxb ${nt?"off":""}">${nt?"No HST":"HST"}</span>`):"";return `<span class="fsel-w">`+(state.canEdit?`<select class="fsel ${set?"set":""}" id="fs-${slug(c.key)}" data-fset="${esc(c.key)}" aria-label="Country for ${esc(c.name)}" title="${set?"":"Guessed from your records. Pick to confirm."}"><option value="AL" ${cur==="AL"?"selected":""}>🇦🇱</option><option value="CA" ${cur==="CA"?"selected":""}>🇨🇦</option></select>`:`<span class="fsel set">${cur==="AL"?"🇦🇱":"🇨🇦"}</span>`)+tb+`</span>`})():"<span></span>"}${state.canEdit?`<select class="isel ${metaOf(c.key).industry?"set":""}" id="is-${slug(c.key)}" data-iset="${esc(c.key)}" aria-label="Industry for ${esc(c.name)}"><option value="">+ Industry</option>${INDUSTRIES.map(o=>`<option ${metaOf(c.key).industry===o?"selected":""}>${o}</option>`).join("")}</select><select class="isel ssel ${metaOf(c.key).source?"set":""}" id="ss-${slug(c.key)}" data-sset="${esc(c.key)}" aria-label="Lead source for ${esc(c.name)}"><option value="">+ Source</option>${SOURCES.map(o=>`<option ${metaOf(c.key).source===o?"selected":""}>${o}</option>`).join("")}</select>`:`<span class="isel set">${esc(metaOf(c.key).industry||"")}</span><span class="isel set">${esc(metaOf(c.key).source||"")}</span>`}${state.canEdit?`<button class="cedit" data-crenamebtn="${esc(c.key)}" aria-label="Rename ${esc(c.name)}" title="Rename">✎</button>`:"<span></span>"}`}</div>${open?clientDetail(c,all):""}`}).join(""):`<div class="empty">${state.loaded?(q?"No match.":"None yet."):"Loading…"}</div>`)+more;
   }
   const act=all.filter(c=>c.type==="active");
   const top=all.slice().sort((a,b)=>b.paid-a.paid)[0];
@@ -1443,7 +1444,7 @@ function renderInvEd(){const host=$("#inv-editor");if(!host)return;const v=invCu
   const C=invClients(),c=invCalc(v),st=invStatus(v);
   host.innerHTML=`<div class="inv-ed"><div class="inv-top"><h3>Invoice <span class="inv-num">#${invNo(v.no)}</span> <span class="inv-st ${st}" style="display:inline-block;margin-left:6px">${INV_LBL[st]}</span></h3><button class="btn ghost" type="button" data-invclose>Close</button></div>
     <div class="inv-grid">
-      <label class="inv-f full"><span>Client</span><select id="inv-client"><option value="">Choose a client…</option>${(()=>{const act=new Set((state.loaded?ckClients(nowKey()):[]).map(c=>slug(c.k))),o=x=>`<option value="${esc(x.s)}" ${x.s===v.client?"selected":""}>${esc(x.name)}${x.amount?` · last ${money(x.amount)}`:""}</option>`,A=C.filter(x=>act.has(x.s)),O=C.filter(x=>!act.has(x.s));return (A.length?`<optgroup label="Active clients · this month">${A.map(o).join("")}</optgroup>`:"")+`<optgroup label="All other clients">${O.map(o).join("")}</optgroup>`})()}<option value="__new" ${v.client==="__new"?"selected":""}>+ Other / new client</option></select></label>
+      <label class="inv-f full"><span>Client</span><select id="inv-client"><option value="">Choose a client…</option>${(()=>{const act=new Set([...(state.loaded?ckClients(nowKey()):[]).map(c=>slug(c.k)),...Object.entries(state.cmeta||{}).filter(([,m])=>m&&m.type==="project").map(([s2])=>s2)]),o=x=>`<option value="${esc(x.s)}" ${x.s===v.client?"selected":""}>${esc(x.name)}${x.amount?` · last ${money(x.amount)}`:""}</option>`,A=C.filter(x=>act.has(x.s)),O=C.filter(x=>!act.has(x.s));return (A.length?`<optgroup label="Active clients · this month">${A.map(o).join("")}</optgroup>`:"")+`<optgroup label="All other clients">${O.map(o).join("")}</optgroup>`})()}<option value="__new" ${v.client==="__new"?"selected":""}>+ Other / new client</option></select></label>
       <label class="inv-f"><span>Bill to · name</span><input data-iv="bill.name" value="${esc(v.bill.name)}" placeholder="Client business name"></label>
       <label class="inv-f"><span>Email</span><input data-iv="bill.email" type="email" value="${esc(v.bill.email)}" placeholder="billing@client.com"></label>
       <label class="inv-f full"><span>Address</span><textarea data-iv="bill.addr" rows="2" placeholder="Street, City, Province">${esc(v.bill.addr)}</textarea></label>
@@ -1541,7 +1542,7 @@ function renderNewClient(){const host=$("#nc-form");if(!host)return;host.hidden=
   host.innerHTML=`<div class="inv-ed" style="margin-bottom:14px"><div class="inv-top"><h3>New client</h3><button class="btn ghost" type="button" data-ncx>Cancel</button></div>
     <div class="inv-grid">
       <label class="inv-f full"><span>Client / business name *</span><input id="nc-name" placeholder="e.g. Olive & Fig"></label>
-      <label class="inv-f"><span>Type</span>${sel("nc-type",[["mkt","Retainer · Marketing"],["con","Retainer · Content"],["one","Single shoot / one-time"]])}</label>
+      <label class="inv-f"><span>Type</span>${sel("nc-type",[["mkt","Retainer · Marketing"],["con","Retainer · Content"],["proj","Active project · repeat bookings"],["one","Single shoot / one-time"]])}</label>
       <label class="inv-f"><span id="nc-amt-l">Monthly fee (before HST)</span><input id="nc-amt" inputmode="decimal" placeholder="$1,500"></label>
       <label class="inv-f"><span id="nc-start-l">Starts</span><select id="nc-start">${mo}</select></label>
       <label class="inv-f" id="nc-end-w"><span>Runs until</span><select id="nc-end">${MONTHS.map((m,i)=>`<option value="${i}" ${i===11?"selected":""}>${FULL[i]} ${YEAR}</option>`).join("")}</select></label>
@@ -1564,7 +1565,8 @@ Canada</textarea></label>
     <p class="ro-note" id="nc-hint" style="margin:12px 0 0"></p>
     <div class="inv-act"><button class="btn dl" type="button" data-ncsave>Add client</button></div></div>`;
   ncSync();setTimeout(()=>{const n=$("#nc-name");if(n)n.focus()},30)}
-function ncSync(){const t=$("#nc-type");if(!t)return;const one=t.value==="one";$("#nc-end-w").hidden=one;$("#nc-amt-l").textContent=one?"Price (before HST)":"Monthly fee (before HST)";$("#nc-start-l").textContent=one?"Shoot month":"Starts";
+function ncSync(){const t=$("#nc-type");if(!t)return;const one=t.value==="one",pj=t.value==="proj";$("#nc-end-w").hidden=one||pj;$("#nc-start").closest("label").hidden=pj;$("#nc-status").closest("label").hidden=pj;$("#nc-amt-l").textContent=pj?"Usual price per booking (optional)":one?"Price (before HST)":"Monthly fee (before HST)";$("#nc-start-l").textContent=one?"Shoot month":"Starts";
+  if(pj){$("#nc-hint").textContent="Adds them to Active projects on the Clients page and to Invoices. Nothing is added to Finances — add each booking there when it happens.";return}
   const s=+$("#nc-start").value,e=+$("#nc-end").value,n=Math.max(1,e-s+1);$("#nc-hint").textContent=one?`Adds one row to ${FULL[s]} in Finances and lists them under One-time shoots.`:`Adds them to Finances every month from ${FULL[s]} to ${FULL[Math.max(s,e)]} (${n} month${n>1?"s":""}), to Active retainers, and to the monthly checklist.`}
 document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#nc-form"))ncSync()});
 document.addEventListener("click",e=>{const t=e.target;if(t.closest("#nc-open")){state.ncOpen=!state.ncOpen;const h=$("#nc-form");if(h)h.innerHTML="";renderNewClient();return}
@@ -1572,10 +1574,10 @@ document.addEventListener("click",e=>{const t=e.target;if(t.closest("#nc-open"))
   if(!t.closest("[data-ncsave]")||!state.canEdit)return;
   const v=id=>($("#"+id)||{}).value||"",name=v("nc-name").trim();if(!name){$("#nc-name").focus();return}
   const g=v("nc-type"),amt=parseAmt(v("nc-amt")),st=v("nc-status"),cty=v("nc-cty"),s=+v("nc-start"),en=g==="one"?s:Math.max(s,+v("nc-end"));
-  for(let i=s;i<=en;i++){const m=clone(i,YEAR);const row={name,amount:amt,status:i===s?st:"unpaid",grp:g};if(cty!=="CA")row.gst=false;m.clients.push(row);saveMonth(i,m,YEAR)}
+  if(g!=="proj")for(let i=s;i<=en;i++){const m=clone(i,YEAR);const row={name,amount:amt,status:i===s?st:"unpaid",grp:g};if(cty!=="CA")row.gst=false;m.clients.push(row);saveMonth(i,m,YEAR)}
   const k=clientKey(name);
-  saveMeta(k,{name,type:g==="one"?"oneoff":"active",country:cty==="XX"?"":cty,industry:v("nc-ind"),source:v("nc-src"),pay:v("nc-pay"),due:v("nc-due"),contact:v("nc-contact").trim(),email:v("nc-email").trim(),phone:v("nc-phone").trim(),link:v("nc-link").trim(),service:v("nc-service").trim(),fee:g==="one"?"":(amt?String(amt):""),drive:v("nc-drive").trim(),notes:v("nc-notes").trim(),noTax:cty!=="CA"?true:null});
-  try{const S=invS();S.clients[slug(k)]={...(S.clients[slug(k)]||{}),name,email:v("nc-email").trim(),addr:v("nc-addr").trim(),tax:cty==="CA"};invSave()}catch(err){console.warn(err)}
+  saveMeta(k,{name,type:g==="one"?"oneoff":g==="proj"?"project":"active",country:cty==="XX"?"":cty,industry:v("nc-ind"),source:v("nc-src"),pay:v("nc-pay"),due:v("nc-due"),contact:v("nc-contact").trim(),email:v("nc-email").trim(),phone:v("nc-phone").trim(),link:v("nc-link").trim(),service:v("nc-service").trim(),fee:g==="one"||g==="proj"?"":(amt?String(amt):""),price:g==="proj"&&amt?String(amt):null,drive:v("nc-drive").trim(),notes:v("nc-notes").trim(),noTax:cty!=="CA"?true:null});
+  try{const S=invS();S.clients[slug(k)]={...(S.clients[slug(k)]||{}),name,email:v("nc-email").trim(),addr:v("nc-addr").trim(),tax:cty==="CA",...(g==="proj"&&amt?{price:amt,service:"Photography / Videography Session",desc:"Shooting session, editing and delivery."}:{})};invSave()}catch(err){console.warn(err)}
   state.ncOpen=false;renderNewClient();state.openClient=k;render();
   const tt=document.getElementById("h-toast")||Object.assign(document.createElement("div"),{id:"h-toast",className:"h-toast"});if(!tt.parentNode)($("#pf")||document.body).appendChild(tt);tt.textContent=`${name} added ✓`;tt.classList.add("on");setTimeout(()=>tt.classList.remove("on"),1800)});
 
