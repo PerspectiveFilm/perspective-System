@@ -2047,7 +2047,7 @@ function renderHomeKpis(){const hk=$("#home-kpis");if(!hk)return;
       <div class="hk-bar"><i style="width:${pct}%"></i></div><div class="hk-s"><b>${money(soFar)}</b> billed so far · <b>${money(Math.max(0,rev-soFar))}</b> still to come · <b>${money(yp)}</b> profit</div>
       <div class="hk-mini"><div class="hk-mh"><span>By month</span><span><i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:5px"></i>profit</span></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${YEAR} revenue by month">${g}</svg></div></div>
     <div class="hk-card"><div class="hk-l"><i style="background:var(--paid)"></i>${FULL[curIdx]} profit</div><div class="hk-v" style="color:var(--paid)">${money(m.profit)}</div><div class="hk-s">${money(m.rev)} in · ${money(m.pay+m.exp)} out</div></div>
-    <div class="hk-card"><div class="hk-l"><i style="background:var(--cash)"></i>Active retainers</div><div class="hk-v">${C.length}</div><div class="hk-s">${mk} marketing · ${cn} content</div></div>`;
+    ${(()=>{const pj=Object.values(state.cmeta||{}).filter(m=>m&&m.type==="project").length;return`<div class="hk-card"><div class="hk-l"><i style="background:var(--cash)"></i>Active clients</div><div class="hk-v">${C.length+pj}</div><div class="hk-s">${mk} marketing · ${cn} content${pj?` · ${pj} project${pj>1?"s":""}`:""}</div></div>`})()}`;
   hk.querySelectorAll("[data-mb]").forEach(b=>b.addEventListener("click",()=>{state.sel=+b.dataset.mb;state.year=YEAR;go("fin");render()}));
 }
 
