@@ -2288,7 +2288,7 @@ function prStart(){clearInterval(prT);prT=setInterval(()=>{if(state.view==="home
   prShow(0,false);prStart()})();
 
 /* ---------- Firebase sync ---------- */
-const DRIVE_URL="https://script.google.com/macros/s/AKfycbzv8Tp95XCzENe9fso2BBnwOklPRlbC6PCC-WTc3tWxZMTHLZhG9r4b63HhxMG_uc2w/exec",DRIVE_T="26wLWZBhJDqanZmEikZvvc4w";
+const DRIVE_URL="https://script.google.com/macros/s/AKfycbyDEYbetMV3ME_WJ7rhR-bSwoOQCU7nPY0r1SIEE51PuWSYZCbEufdDxmULBuz79za9/exec",DRIVE_T="26wLWZBhJDqanZmEikZvvc4w";
 let driveT=null,driveLast=0;
 function driveCopy(now){const go=()=>{driveLast=Date.now();const data={};for(const k of (window.__pfSync||{}).KEYS||[]){const v=localStorage.getItem(k);if(v!=null)data[k]=v}
   fetch(DRIVE_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({t:DRIVE_T,data})}).catch(()=>{})};
