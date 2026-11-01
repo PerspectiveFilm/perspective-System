@@ -1848,7 +1848,7 @@ document.addEventListener("click",async e=>{
 /* ---------- debtors ---------- */
 function debtors(){
   const nk=nowKey(),g={},td=new Date(),pk=key(td.getMonth()===0?11:td.getMonth()-1,td.getMonth()===0?td.getFullYear()-1:td.getFullYear());let later=0;
-  const notDue=(k,mk)=>{const du=(metaOf(k)||{}).due;return du==="eom"?(mk===nk||(mk===pk&&td.getDate()===1)):du==="first"?(mk===nk&&td.getDate()===1):false};
+  const notDue=(k,mk)=>{const du=(metaOf(k)||{}).due;return du==="eom"?(mk===nk||(mk===pk&&td.getDate()===1)):false};
   for(const mk of Object.keys(state.months).sort()){
     if(mk>nk)continue;const[y,mo]=mk.split("-").map(Number),i=mo-1,rate=hasGst(i,y)?GST_RATE:0;
     (state.months[mk].clients||[]).forEach((x,j)=>{
