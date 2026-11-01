@@ -357,6 +357,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-col.p-over{border-color:var(--sc,var(--accent));background:var(--soft)}
 .p-ghost{position:fixed;z-index:10000;pointer-events:none;transform:rotate(2deg) scale(1.03);box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:.95}
 #pf .p-empty{font-size:12.5px;color:var(--muted);padding:8px 4px}
+#pf .d-ms span.nd{color:var(--ink)}
+#pf .d-a.nd{color:var(--ink)}
 #pf .row.mrow{grid-template-columns:auto minmax(0,1fr) 118px auto 24px}
 #pf .amtw{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
 #pf .amtw input.amt{flex:0 0 auto;width:84px;min-width:0}
@@ -1855,26 +1857,26 @@ function debtors(){
       if(!x.name||(x.status!=="unpaid"&&x.status!=="deposit"))return;
       const gOk=rowTaxable(x);
       const owed=(+x.amount||0)*(x.status==="deposit"?.5:1)*(1+(gOk?rate:0));if(owed<=0)return;
-      const k=clientKey(x.name);if(notDue(k,mk)){later+=owed;return}const d=g[k]||(g[k]={k,name:metaOf(k).name||cleanName(x.name),total:0,items:[]});
+      const k=clientKey(x.name),nd=notDue(k,mk);const d=g[k]||(g[k]={k,name:metaOf(k).name||cleanName(x.name),total:0,later:0,items:[]});if(nd){later+=owed;d.later+=owed;d.items.push({nm:x.name.trim(),mk,i,y,j,owed,dep:x.status==="deposit",nd:true});return}
       d.total+=owed;d.items.push({nm:x.name.trim(),mk,i,y,j,owed,dep:x.status==="deposit"});
     });
   }
-  const R=Object.values(g).sort((a,b)=>b.total-a.total);R.later=later;return R;
+  const R=Object.values(g).sort((a,b)=>(b.total-a.total)||(b.later-a.later));R.later=later;return R;
 }
 function renderDebtors(){
   const host=$("#debt-list");if(!host)return;
-  const D=debtors(),tot=D.reduce((s,d)=>s+d.total,0),nk=nowKey();
-  $("#debt-sub").textContent=D.length?`${D.length} client${D.length>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
+  const D=debtors(),tot=D.reduce((s,d)=>s+d.total,0),nk=nowKey(),nOwe=D.filter(d=>d.total>0).length;
+  $("#debt-sub").textContent=nOwe?`${nOwe} client${nOwe>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
   if(!state.loaded){host.innerHTML=`<div class="d-empty">Loading…</div>`;return}
-  host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="old">${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
-      <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
+  host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.nd?"nd":"old"}" ${it.nd?`title="Not due yet"`:""}>${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
+      <div class="d-a ${d.total?"":"nd"}">${d.total?money(d.total):money(d.later)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
     :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"");
 }
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-dpay]");if(!b||!state.canEdit)return;
   if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Confirm";b.classList.add("armed");setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Paid";b.classList.remove("armed")}},3000);return}
   const d=debtors().find(x=>x.k===b.dataset.dpay);if(!d)return;
-  const byM={};d.items.forEach(it=>(byM[it.mk]=byM[it.mk]||[]).push(it));
+  const byM={};(d.total>0?d.items.filter(it=>!it.nd):d.items).forEach(it=>(byM[it.mk]=byM[it.mk]||[]).push(it));
   for(const mk of Object.keys(byM)){const it0=byM[mk][0],m=clone(it0.i,it0.y);byM[mk].forEach(it=>{const x=m.clients[it.j];if(x)x.status=CASH_CLIENT.test(x.name.trim())?"cash":"paid"});await saveMonth(it0.i,m,it0.y)}
 });
 
