@@ -1866,7 +1866,7 @@ function renderDebtors(){
   const D=debtors(),tot=D.reduce((s,d)=>s+d.total,0),nk=nowKey();
   $("#debt-sub").textContent=D.length?`${D.length} client${D.length>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
   if(!state.loaded){host.innerHTML=`<div class="d-empty">Loading…</div>`;return}
-  host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.dep?"dep":it.mk<nk?"old":""}">${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
+  host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="old">${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
       <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
     :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"");
 }
