@@ -2288,6 +2288,12 @@ function prStart(){clearInterval(prT);prT=setInterval(()=>{if(state.view==="home
   prShow(0,false);prStart()})();
 
 /* ---------- Firebase sync ---------- */
+const DRIVE_URL="https://script.google.com/macros/s/AKfycbzv8Tp95XCzENe9fso2BBnwOklPRlbC6PCC-WTc3tWxZMTHLZhG9r4b63HhxMG_uc2w/exec",DRIVE_T="26wLWZBhJDqanZmEikZvvc4w";
+let driveT=null,driveLast=0;
+function driveCopy(now){const go=()=>{driveLast=Date.now();const data={};for(const k of (window.__pfSync||{}).KEYS||[]){const v=localStorage.getItem(k);if(v!=null)data[k]=v}
+  fetch(DRIVE_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({t:DRIVE_T,data})}).catch(()=>{})};
+  clearTimeout(driveT);if(now)return go();const wait=Math.max(5000,30000-(Date.now()-driveLast));driveT=setTimeout(go,wait)}
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&driveT){clearTimeout(driveT);driveT=null;driveCopy(true)}});
 (function(){const S=window.__pfSync;if(!S)return;
   const KEYS=S.KEYS;const rawSet=Storage.prototype.setItem;let applying=false,dirty={},pushT=null,pend=null;
   const badge=()=>{let b=document.getElementById("sync-badge");if(!b){b=document.createElement("span");b.id="sync-badge";b.className="sync-b";b.title="Backups & sign out";b.style.cursor="pointer";b.addEventListener("click",bakMenu);const h=document.querySelector("#pf .hist");if(h)h.appendChild(b)}return b};
@@ -2308,7 +2314,7 @@ function prStart(){clearInterval(prT);prT=setInterval(()=>{if(state.view==="home
   const mark=(t,ok)=>{const b=badge();b.textContent=t;b.dataset.ok=ok?"1":"0"};
   Storage.prototype.setItem=function(k,v){rawSet.call(this,k,v);if(this===window.localStorage&&!applying&&KEYS.includes(k)){dirty[k]=String(v);clearTimeout(pushT);pushT=setTimeout(push,700)}};
   async function push(){const set=dirty;dirty={};if(!Object.keys(set).length)return;mark("Saving…",true);
-    try{await S.set(set);mark("Synced",true)}catch(e){console.warn(e);dirty={...set,...dirty};mark("Offline – retrying",false);clearTimeout(pushT);pushT=setTimeout(push,5000)}}
+    try{await S.set(set);mark("Synced",true);driveCopy()}catch(e){console.warn(e);dirty={...set,...dirty};mark("Offline – retrying",false);clearTimeout(pushT);pushT=setTimeout(push,5000)}}
   function apply(data){
     const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&a.closest("#pf")){pend={...(pend||{}),...data};return}
     let ch=false;applying=true;try{for(const k of KEYS)if(data[k]!=null&&!(k in dirty)&&localStorage.getItem(k)!==data[k]){rawSet.call(localStorage,k,data[k]);ch=true}}finally{applying=false}
@@ -2318,7 +2324,7 @@ function prStart(){clearInterval(prT);prT=setInterval(()=>{if(state.view==="home
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
-  const start=()=>{mark(S.offline?"Offline":"Synced",!S.offline);S.listen(d=>{apply(d);mark("Synced",true)},()=>mark("Offline",false))};
+  const start=()=>{mark(S.offline?"Offline":"Synced",!S.offline);let first=true;S.listen(d=>{apply(d);mark("Synced",true);if(first){first=false;setTimeout(()=>driveCopy(true),3000)}},()=>mark("Offline",false))};
   (function wait(){state.loaded?start():setTimeout(wait,300)})();
 })();
 
