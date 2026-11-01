@@ -2257,9 +2257,9 @@ function render(){
   const s=stats(state.sel);
   $("#month-kpis").innerHTML=kpi(FULL[state.sel]+" revenue",money(s.rev))+kpi("Outstanding",money(s.out),s.out?"bad":"")+kpi("Team + expenses",money(s.pay+s.exp))+kpi("Profit",money(s.profit),"acc");
   if(state.loaded)board(state.sel,$("#fin-board"));
-  const tr=all.map((x,i)=>`<tr class="${i===state.sel?"sel":""}"><td>${FULL[i]}${i>lastIdx(state.year)?' <span class="tag">projected</span>':""}</td><td>${money(x.rev)}</td><td>${money(x.got)}</td><td style="color:${x.out?"var(--unpaid)":"inherit"}">${money(x.out)}</td><td>${money(x.pay)}</td><td>${money(x.exp)}</td><td style="color:var(--accent)">${money(x.profit)}</td></tr>`).join("");
+  const tr=all.map((x,i)=>`<tr class="${i===state.sel?"sel":""}"><td>${FULL[i]}${i>lastIdx(state.year)?' <span class="tag">projected</span>':""}</td><td>${money(x.rev)}</td><td style="color:${x.out?"var(--unpaid)":"inherit"}">${money(x.out)}</td><td>${money(x.pay)}</td><td>${money(x.exp)}</td><td style="color:var(--accent)">${money(x.profit)}</td></tr>`).join("");
   const T=f=>all.reduce((a,x)=>a+x[f],0);
-  $("#year-table").innerHTML=`<thead><tr><th>Month</th><th>Revenue</th><th>Received</th><th>Outstanding</th><th>Team</th><th>Expenses</th><th>Profit</th></tr></thead><tbody>${tr}</tbody><tfoot><tr><td>Full year</td><td>${money(T("rev"))}</td><td>${money(T("got"))}</td><td>${money(T("out"))}</td><td>${money(T("pay"))}</td><td>${money(T("exp"))}</td><td>${money(T("profit"))}</td></tr></tfoot>`;
+  $("#year-table").innerHTML=`<thead><tr><th>Month</th><th>Revenue</th><th>Outstanding</th><th>Team</th><th>Expenses</th><th>Profit</th></tr></thead><tbody>${tr}</tbody><tfoot><tr><td>Full year</td><td>${money(T("rev"))}</td><td>${money(T("out"))}</td><td>${money(T("pay"))}</td><td>${money(T("exp"))}</td><td>${money(T("profit"))}</td></tr></tfoot>`;
   renderClients();
   backupLabel();
   if(!render._s){render._s=1;renderSys();renderLeads();renderQs();renderPipe()}
