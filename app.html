@@ -688,8 +688,8 @@ html.p-lock,html.p-lock body{overflow:hidden}
     <section>
       <div class="sec-h"><h2>Finances</h2><div class="months" id="year-picker"></div></div>
       <div class="kpis" id="year-kpis"></div>
-      <div class="card"><svg class="chart" id="chart-fin" viewBox="0 0 720 150" role="img" aria-label="Monthly revenue 2026"></svg>
-        <div class="legend"><span><i style="background:var(--paid)"></i>Revenue</span><span><i style="background:var(--accent);border-radius:50%"></i>Profit</span><span><i style="background:var(--unpaid);border-radius:50%"></i>Still owed</span><span>Dashed = planned · Click a month to open it</span></div>
+      <div class="card"><svg class="chart" id="chart-fin" viewBox="0 0 720 170" role="img" aria-label="Monthly revenue 2026"></svg>
+        <div class="legend"><span><i style="background:var(--paid)"></i>Received</span><span><i style="background:var(--unpaid)"></i>Outstanding</span><span><i style="background:var(--accent);border-radius:50%"></i>Profit</span></div>
       </div>
     </section>
     <section>
@@ -870,18 +870,25 @@ document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g
 
 /* ---------- chart ---------- */
 function drawChart(svg,yr=state.year){
-  const W=720,H=150,L=40,R=10,T=14,B=24,iw=W-L-R,ih=H-T-B;
+  const W=720,H=170,L=40,R=10,T=20,B=24,iw=W-L-R,ih=H-T-B;
   const S=MONTHS.map((_,i)=>stats(i,yr)),cur=lastIdx(yr),selHere=yr===state.year?state.sel:-1;
-  const max=Math.max(5000,...S.map(s=>s.rev)),step=max>40000?20000:max>20000?10000:5000,top=Math.ceil(max/step)*step;
-  const bw=iw/12,xx=i=>L+i*bw+bw/2,yy=v=>T+ih-(Math.max(0,v)/top)*ih;
+  const max=Math.max(10000,...S.map(s=>s.rev));
+  const step=max>20000?10000:5000, top=Math.ceil(max/step)*step;
+  const y=v=>T+ih-(v/top)*ih, bw=iw/12;
   let g="";
-  for(let v=0;v<=top;v+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--line)"/><text x="${L-6}" y="${yy(v)+4}" text-anchor="end">${v?v/1000+"k":"0"}</text>`;
-  S.forEach((s,i)=>{const sel=i===selHere;g+=`<g class="bar" data-bar="${i}"><rect x="${L+i*bw}" y="${T}" width="${bw}" height="${ih}" fill="${sel?"var(--soft)":"transparent"}" opacity="${sel?.6:1}"/><text x="${xx(i)}" y="${H-7}" text-anchor="middle" style="${sel?"fill:var(--ink);font-weight:600":""}">${MONTHS[i]}</text><title>${FULL[i]} · revenue ${money(s.rev)} · profit ${money(s.profit)}</title></g>`});
-  const A=S.map((s,i)=>[s,i]),done=A.filter(([,i])=>i<=cur),fut=A.filter(([,i])=>i>=cur);
-  const ln=(P,f)=>P.map(([s,i])=>`${xx(i)},${yy(s[f])}`).join(" ");
-  if(done.length){g+=`<polygon points="${xx(0)},${yy(0)} ${ln(done,"rev")} ${xx(done[done.length-1][1])},${yy(0)}" fill="var(--paid)" opacity=".12" pointer-events="none"/><polyline points="${ln(done,"rev")}" fill="none" stroke="var(--paid)" stroke-width="2" stroke-linejoin="round" pointer-events="none"/><polyline points="${ln(done,"profit")}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" pointer-events="none"/>`}
-  if(fut.length>1)g+=`<polyline points="${ln(fut,"rev")}" fill="none" stroke="var(--paid)" stroke-width="2" stroke-dasharray="3 4" opacity=".6" pointer-events="none"/><polyline points="${ln(fut,"profit")}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 4" opacity=".6" pointer-events="none"/>`;
-  S.forEach((s,i)=>{if(s.out>0&&i<=cur)g+=`<circle cx="${xx(i)}" cy="${yy(s.rev)}" r="3" fill="var(--unpaid)" pointer-events="none"/>`;if(i===selHere)g+=`<circle cx="${xx(i)}" cy="${yy(s.rev)}" r="4.5" fill="var(--paid)" stroke="var(--surface)" stroke-width="1.5" pointer-events="none"/><text x="${xx(i)}" y="${yy(s.rev)-9}" text-anchor="middle" style="fill:var(--ink);font-size:11px;font-weight:600" pointer-events="none">$${(s.rev/1000).toFixed(1)}k</text>`});
+  for(let v=0;v<=top;v+=step){g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v?v/1000+"k":"0"}</text>`}
+  S.forEach((s,i)=>{
+    const x=L+i*bw+bw*.2,w=bw*.6,future=i>cur,sel=i===selHere;
+    const op=future?.35:1;
+    g+=`<g class="bar" data-bar="${i}"><rect x="${L+i*bw}" y="${T}" width="${bw}" height="${ih}" fill="transparent"/>`;
+    if(s.got>0)g+=`<rect x="${x}" y="${y(s.got)}" width="${w}" height="${y(0)-y(s.got)}" rx="3" fill="var(--paid)" opacity="${op}"/>`;
+    if(s.out>0)g+=`<rect x="${x}" y="${y(s.rev)}" width="${w}" height="${y(s.got)-y(s.rev)}" rx="3" fill="var(--unpaid)" opacity="${future?.35:.85}"/>`;
+    if(s.rev>0)g+=`<text x="${L+i*bw+bw/2}" y="${y(s.rev)-7}" text-anchor="middle" style="fill:var(--ink);font-size:10.5px;opacity:${future?.55:1}">$${(s.rev/1000).toFixed(1)}k</text>`;
+    g+=`<text x="${L+i*bw+bw/2}" y="${H-10}" text-anchor="middle" style="${sel?"fill:var(--ink);font-weight:600":""}">${MONTHS[i]}</text></g>`;
+  });
+  const pts=S.map((s,i)=>[L+i*bw+bw/2,y(Math.max(0,s.profit))]);
+  g+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${i===selHere?5:3}" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"><title>${FULL[i]} profit ${money(S[i].profit)}</title></circle>`);
   svg.innerHTML=g;
   svg.querySelectorAll(".bar").forEach(b=>b.addEventListener("click",()=>{state.sel=+b.dataset.bar;state.year=yr;go("fin");render()}));
 }
