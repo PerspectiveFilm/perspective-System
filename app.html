@@ -681,7 +681,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
       <div class="sec-h"><h2>All time</h2><div class="bk"><span class="bk-last" id="bk-last"></span><button class="btn" data-backup>Backup to Excel</button></div></div>
       <p class="eyebrow" style="margin:-6px 0 12px">Since April 2021 · CAD</p>
       <div class="kpis" id="all-kpis"></div>
-      <div class="card"><svg class="chart" id="chart-all" viewBox="0 0 720 150" role="img" aria-label="Monthly revenue since April 2021"></svg>
+      <div class="card"><svg class="chart" id="chart-all" viewBox="0 0 720 168" role="img" aria-label="Monthly revenue since April 2021"></svg>
         <div class="legend"><span><i style="background:var(--paid)"></i>Revenue</span><span><i style="background:var(--accent);border-radius:50%"></i>Profit</span><span>Dashed = planned · Click a year to open it</span></div>
       </div>
     </section>
@@ -888,7 +888,7 @@ function drawChart(svg,yr=state.year){
 
 function yearStats(y){const a=MONTHS.map((_,i)=>stats(i,y));const t=f=>a.reduce((s,x)=>s+x[f],0);return{rev:t("rev"),got:t("got"),out:t("out"),profit:t("profit")}}
 function drawAllTime(svg){
-  const W=720,H=150,L=40,R=10,T=14,B=24,iw=W-L-R,ih=H-T-B;
+  const W=720,H=168,L=40,R=10,T=14,B=40,iw=W-L-R,ih=H-T-B;
   const S=YEARS.map(y=>({y,...yearStats(y)}));
   const M=[];YEARS.forEach(y=>MONTHS.forEach((_,i)=>{if(y===YEARS[0]&&i<3)return;const s=stats(i,y);M.push({y,i,rev:s.rev,profit:s.profit,fut:y===YEAR&&i>curIdx})}));
   const n=M.length,max=Math.max(5000,...M.map(m=>m.rev)),step=max>40000?20000:max>20000?10000:5000,top=Math.ceil(max/step)*step;
@@ -896,7 +896,7 @@ function drawAllTime(svg){
   let g="";
   for(let v=0;v<=top;v+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--line)"/><text x="${L-6}" y="${yy(v)+4}" text-anchor="end">${v?v/1000+"k":"0"}</text>`;
   YEARS.forEach(y=>{const ks=M.map((m,k)=>m.y===y?k:-1).filter(k=>k>=0);if(!ks.length)return;const x0=ks[0]?(xx(ks[0])+xx(ks[0]-1))/2:L,x1=ks[ks.length-1]<n-1?(xx(ks[ks.length-1])+xx(ks[ks.length-1]+1))/2:W-R,sel=y===state.year;
-    g+=`<g class="bar" data-yr="${y}" style="cursor:pointer"><rect x="${x0}" y="${T}" width="${x1-x0}" height="${ih}" fill="${sel?"var(--soft)":"transparent"}" opacity="${sel?.6:1}"/>${ks[0]?`<line x1="${x0}" x2="${x0}" y1="${T}" y2="${T+ih}" stroke="var(--line)" stroke-dasharray="2 3"/>`:""}<text x="${(x0+x1)/2}" y="${H-7}" text-anchor="middle" style="${sel?"fill:var(--ink);font-weight:600":""}">${y}</text></g>`});
+    g+=`<g class="bar" data-yr="${y}" style="cursor:pointer"><rect x="${x0}" y="${T}" width="${x1-x0}" height="${ih}" fill="${sel?"var(--soft)":"transparent"}" opacity="${sel?.6:1}"/>${ks[0]?`<line x1="${x0}" x2="${x0}" y1="${T}" y2="${T+ih}" stroke="var(--line)" stroke-dasharray="2 3"/>`:""}<text x="${(x0+x1)/2}" y="${H-22}" text-anchor="middle" style="${sel?"fill:var(--ink);font-weight:600":""}">${y}</text><text x="${(x0+x1)/2}" y="${H-5}" text-anchor="middle" style="fill:var(--paid);font-size:12.5px;font-weight:600">$${Math.round(S.find(z=>z.y===y).rev/1000)}k</text></g>`});
   const pl=(f,F)=>M.map((m,k)=>F(m)?`${xx(k)},${yy(m[f])}`:null);
   const seg=arr=>arr.join(" ");
   const done=M.map((m,k)=>[m,k]).filter(([m])=>!m.fut),fut=M.map((m,k)=>[m,k]).filter(([m],j)=>m.fut||(M[j+1]&&M[j+1].fut));
