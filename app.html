@@ -2253,7 +2253,7 @@ function render(){
   $("#year-picker").innerHTML=YEARS.map(y=>`<button aria-pressed="${y===state.year}" data-year="${y}">${y}</button>`).join("");
   $("#month-picker").innerHTML=MONTHS.map((m,i)=>`<button aria-pressed="${i===state.sel}" data-pick="${i}">${m}</button>`).join("");
   const s=stats(state.sel);
-  $("#month-kpis").innerHTML=kpi(FULL[state.sel]+" revenue",money(s.rev))+kpi("Team + expenses",money(s.pay+s.exp))+kpi("Profit",money(s.profit),"acc");
+  $("#month-kpis").innerHTML=kpi(FULL[state.sel]+" revenue",money(s.rev),"acc")+kpi("Team + expenses",money(s.pay+s.exp),"bad")+kpi("Profit",money(s.profit),s.profit<0?"bad":"good");
   if(state.loaded)board(state.sel,$("#fin-board"));
   const tr=all.map((x,i)=>`<tr class="${i===state.sel?"sel":""}"><td>${FULL[i]}${i>lastIdx(state.year)?' <span class="tag">projected</span>':""}</td><td>${money(x.rev)}</td><td style="color:${x.out?"var(--unpaid)":"inherit"}">${money(x.out)}</td><td>${money(x.pay)}</td><td>${money(x.exp)}</td><td style="color:var(--accent)">${money(x.profit)}</td></tr>`).join("");
   const T=f=>all.reduce((a,x)=>a+x[f],0);
