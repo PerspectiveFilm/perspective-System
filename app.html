@@ -47,6 +47,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .sec-h h2{font-family:var(--display);font-weight:500;font-size:30px;letter-spacing:-.01em;margin:0;line-height:1}
 #pf .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 #pf .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+#pf .kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+@media (max-width:720px){#pf .kpis.k3{grid-template-columns:repeat(2,minmax(0,1fr)) !important}#pf .kpis.k3>:last-child{grid-column:1/-1}}
 #pf .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px}
 #pf .kpi{background:var(--surface);padding:16px 18px}
 #pf .kpi .v{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums;margin-top:4px}
@@ -694,8 +696,8 @@ html.p-lock,html.p-lock body{overflow:hidden}
     </section>
     <section>
       <div class="sec-h"><div class="months" id="month-picker"></div></div>
-      <div class="kpis" id="month-kpis"></div>
       <div id="fin-board"></div>
+      <div class="kpis k3" id="month-kpis" style="margin-top:14px"></div>
     </section>
     <section>
       <div class="sec-h"><h2 id="yr-title">Yearly expenses</h2><span class="eyebrow" id="yr-sub"></span></div>
@@ -2251,7 +2253,7 @@ function render(){
   $("#year-picker").innerHTML=YEARS.map(y=>`<button aria-pressed="${y===state.year}" data-year="${y}">${y}</button>`).join("");
   $("#month-picker").innerHTML=MONTHS.map((m,i)=>`<button aria-pressed="${i===state.sel}" data-pick="${i}">${m}</button>`).join("");
   const s=stats(state.sel);
-  $("#month-kpis").innerHTML=kpi(FULL[state.sel]+" revenue",money(s.rev))+kpi("Outstanding",money(s.out),s.out?"bad":"")+kpi("Team + expenses",money(s.pay+s.exp))+kpi("Profit",money(s.profit),"acc");
+  $("#month-kpis").innerHTML=kpi(FULL[state.sel]+" revenue",money(s.rev))+kpi("Team + expenses",money(s.pay+s.exp))+kpi("Profit",money(s.profit),"acc");
   if(state.loaded)board(state.sel,$("#fin-board"));
   const tr=all.map((x,i)=>`<tr class="${i===state.sel?"sel":""}"><td>${FULL[i]}${i>lastIdx(state.year)?' <span class="tag">projected</span>':""}</td><td>${money(x.rev)}</td><td style="color:${x.out?"var(--unpaid)":"inherit"}">${money(x.out)}</td><td>${money(x.pay)}</td><td>${money(x.exp)}</td><td style="color:var(--accent)">${money(x.profit)}</td></tr>`).join("");
   const T=f=>all.reduce((a,x)=>a+x[f],0);
