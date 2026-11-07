@@ -2058,6 +2058,10 @@ const oneMonthly=y=>yrItems(y).filter(x=>x.kind==="one").reduce((s,x)=>s+(+x.amo
 const autoSum=(i,y)=>autoExp(i,y).reduce((s,a)=>s+(a.off?0:a.amt),0);
 function yrSave(y){const d={items:yrItems(y)};if(!db){try{localStorage.setItem("pf-yearly",JSON.stringify(state.yearly))}catch(e){}render();return}
   render();db.doc("yearly/"+y).set(d).catch(flagErr)}
+function pfImport(){const ID="exp-20261106",y="2026",Y=state.yearly||{};if(((Y[y]||{}).imp||[]).includes(ID))return;
+  const A=[["Gimbal",744.67],["Batery Charger",14.49],["TV Stand",35.02],["Light Bag",163.27],["Camera",4226.57],["Monitor",628.24],["Drone",1636.36],["Memory Card",87.81],["SSD",492.41],["Camera Cleaner",23],["Cable Connector",27.52],["Camera Bag",218.64],["HDD Repair",100],["Lap Top",4750],["Squarespace",384],["Uber",33.95],["Uber",41.92]];
+  yrMut(2026,L=>{A.forEach(([name,amount])=>{if(!L.some(x=>x.kind==="one"&&x.name===name&&Math.abs((+x.amount||0)-amount)<.005))L.push({name,amount,kind:"one"})})});
+  state.yearly[y].imp=[...(state.yearly[y].imp||[]),ID];try{localStorage.setItem("pf-yearly",JSON.stringify(state.yearly))}catch(e){}try{renderYearly()}catch(e){}}
 function yrMut(y,fn){state.yearly=JSON.parse(JSON.stringify(state.yearly||{}));const k=String(y);state.yearly[k]=state.yearly[k]||{items:[]};fn(state.yearly[k].items);yrSave(y)}
 function renderYearly(){const host=$("#yr-card");if(!host)return;const y=state.year,L=yrItems(y),tot=L.reduce((s,x)=>s+yrEff(x,y),0),ro=state.canEdit?"":"readonly";
   $("#yr-title").textContent="Yearly expenses "+y;const selA=autoSum(state.sel,y);$("#yr-sub").textContent=L.length?`${money(tot)} / year · ${money(tot/12)} / month`:"Split across all 12 months";
@@ -2334,7 +2338,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&driveT){cl
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
-  const start=()=>{mark(S.offline?"Offline":"Synced",!S.offline);let first=true;S.listen(d=>{apply(d);mark("Synced",true);if(first){first=false;setTimeout(()=>driveCopy(true),3000)}},()=>mark("Offline",false))};
+  const start=()=>{mark(S.offline?"Offline":"Synced",!S.offline);let first=true;S.listen(d=>{apply(d);mark("Synced",true);if(first){first=false;try{pfImport()}catch(e){console.warn(e)}setTimeout(()=>driveCopy(true),3000)}},()=>mark("Offline",false))};
   (function wait(){state.loaded?start():setTimeout(wait,300)})();
 })();
 
