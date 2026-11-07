@@ -607,6 +607,17 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .p-box .p-ed{padding:0}
 #pf .p-box .p-ed .le{background:var(--soft);font-size:14px;padding:9px 10px}
 html.p-lock,html.p-lock body{overflow:hidden}
+
+/* yearly compact */
+#pf #yr-card .yr-k{display:none}
+#pf #yr-card .yr-row:has(.yr-grip),#pf #yr-card .yr-hd{grid-template-columns:14px minmax(0,1fr) 96px 80px 20px}
+#pf #yr-card .yr-row{padding:3px 0;gap:8px}
+#pf #yr-card .yr-row input,#pf #yr-card .yr-row .yr-tot-ro{font-size:13px}
+#pf #yr-card .yr-row input.yr-pm{font-size:12px}
+#pf #yr-card .yr-when{font-size:10.5px;line-height:1.2}
+#pf #yr-card .yr-nm{line-height:1.25}
+#pf #yr-card .c-sep{margin-top:10px}
+@media (max-width:520px){#pf #yr-card .yr-row:has(.yr-grip),#pf #yr-card .yr-hd{grid-template-columns:10px minmax(0,1fr) 78px 60px 14px!important}}
 </style>
 </head>
 <body>
@@ -2054,7 +2065,7 @@ function renderYearly(){const host=$("#yr-card");if(!host)return;const y=state.y
   const row=(x,j)=>`<div class="yr-row" data-yj="${j}" data-k="${(x.kind||"rec")==="one"?"one":"mr"}">${state.canEdit?`<span class="grip yr-grip" title="Drag to move" aria-hidden="true">⠿</span>`:""}<select class="yr-k k-${x.kind||"rec"}" data-yk="${j}" ${state.canEdit?"":"disabled"} aria-label="Type"><option value="mon" ${x.kind==="mon"?"selected":""}>Monthly</option><option value="one" ${x.kind==="one"?"selected":""}>One time</option></select><div class="yr-nm"><input id="yr-${j}-n" value="${esc(x.name)}" data-yf="name" data-yj="${j}" ${ro} aria-label="Name"><span class="yr-when">${(x.kind||"rec")==="mon"?`Monthly${yrActive(x,y)<12?` · skipped ${12-yrActive(x,y)} month${12-yrActive(x,y)>1?"s":""}`:""}`:(x.kind==="one")?`One time · record only`:`Paid in <select data-ysch="pm" data-yj="${j}" ${state.canEdit?"":"disabled"}>${MON3.map((m,k)=>`<option value="${k+1}" ${yrPaidM(x)===k+1?"selected":""}>${m}</option>`).join("")}</select>`}</span></div>${x.kind==="mon"?`<span class="amt-ro yr-tot-ro" id="yr-${j}-a" title="Monthly amount × months used">${money2(yrEff(x,y))}</span>`:`<input id="yr-${j}-a" class="amt" inputmode="decimal" value="${money2(yrEff(x,y))}" data-yf="amount" data-yj="${j}" ${ro} aria-label="Amount per year">`}<input id="yr-${j}-m" class="amt yr-pm" inputmode="decimal" value="${money2((x.kind||"rec")==="mon"?(+x.amount||0)/12:yrEff(x,y)/12)}" data-yf="month" data-yj="${j}" ${ro} aria-label="Amount per month">${state.canEdit?`<span class="yr-act"><button class="x" data-ydel="${j}" aria-label="Remove">×</button></span>`:"<span></span>"}</div>`;
   const gk=x=>(x.kind||"rec")==="one"?"one":"mr";const grp=(k,lab)=>{const G=L.map((x,j)=>[x,j]).filter(([x])=>gk(x)===k),t=G.reduce((s2,[x])=>s2+yrEff(x,y),0),open=(state.yrOpen||{})[k],V=open?G:G.slice(0,3);
     return`<div class="yr-grp" data-k="${k}"><div class="c-sep"><span>${lab}</span><span>${G.length?`${money2(t)} / yr · ${money2(t/12)} / mo`:""}</span></div>${G.length?V.map(([x,j])=>row(x,j)).join(""):`<div class="c-empty">${state.canEdit?"Drag an item here":"Nothing here yet"}</div>`}${G.length>3?`<button class="yr-more" data-ymore="${k}">${open?"Show less":`Show all ${G.length}`}</button>`:""}</div>`};
-  host.innerHTML=`<div class="yr-hd"><span></span><span></span><span></span><span>Year</span><span>Month</span><span></span></div>`+grp("mr","Monthly")+grp("one","One time")
+  host.innerHTML=`<div class="yr-hd"><span></span><span></span><span>Year</span><span>Month</span><span></span></div>`+grp("mr","Monthly")+grp("one","One time")
 +`<div class="yr-tot"><span>Total ${y}</span><b>${money2(tot)} <small>/ yr · ${money2(tot/12)} / mo</small></b></div><div class="yr-tot sub"><span>In ${FULL[state.sel]} expenses<br><small>Monthly items every month · Yearly only in the month paid · One time not counted · skip any month with ⊘ there</small></span><b>${money2(selA)}</b></div>`
    +(state.canEdit?`<form class="add" id="yr-add"><input class="n" id="yr-add-n" placeholder="Expense (yearly $)" required><select id="yr-add-k" aria-label="Section"><option value="mon">Monthly</option><option value="one">One time</option></select><input class="a" id="yr-add-a" placeholder="$0" inputmode="decimal" required><button class="btn">Add</button></form>`:"")}
 const money2=n=>"$"+(+n||0).toLocaleString("en-CA",{minimumFractionDigits:2,maximumFractionDigits:2});
