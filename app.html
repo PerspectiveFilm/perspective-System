@@ -1481,6 +1481,9 @@ function invMakeMonthly(){const L=invMonthly();if(!L.length)return;const S=invS(
     S.list.unshift({id:"i"+Date.now()+Math.random().toString(36).slice(2,6),no:S.next,date:d,due:d,client:s,mo:mk,bill:{name,addr:b.addr||"Toronto, Ontario\nCanada",email:b.email||""},title:`${mo} Invoice - ${name}`,
       items:[{name:b.service||sv.n,desc:b.desc||sv.d,price:+x.amount||+b.price||0,qty:1}],tax:b.tax!=null?!!b.tax:rowTaxable(x),paid:0,sent:false,note:""});S.next=(+S.next||0)+1});
   invSave();state.invF="draft";state.invOpen=null;renderInv()}
+function invSyncMonth(v,paid){try{const mk=v.mo||(v.date||"").slice(0,7);if(!v.client||!/^\d{4}-\d{2}$/.test(mk))return;const y=+mk.slice(0,4),i=+mk.slice(5,7)-1;if(!state.months[key(i,y)])return;
+  const m=clone(i,y),j=(m.clients||[]).findIndex(x=>x.name&&x.status!=="tax"&&slug(clientKey(x.name))===v.client);if(j<0)return;const x=m.clients[j];
+  if(paid){if(x.status==="paid"||x.status==="cash")return;x.status=CASH_CLIENT.test(x.name.trim())?"cash":"paid"}else{if(x.status!=="paid")return;x.status="unpaid"}saveMonth(i,m,y)}catch(e){console.warn(e)}}
 const invCur=()=>invS().list.find(x=>x.id===state.invOpen);
 function invPickClient(s){const v=invCur();if(!v)return;const c=invClients().find(x=>x.s===s);v.client=s;if(!c){invSave();renderInv();return}
   const b=c.bill||{};v.bill={name:b.name||c.name,addr:b.addr||"Toronto, Ontario\nCanada",email:b.email||""};
@@ -1546,7 +1549,7 @@ document.addEventListener("click",e=>{const t=e.target;if(!t.closest||!t.closest
   if(b=t.closest("[data-iadd]")){const i=+b.dataset.iadd,s=INV_SERVICES[i];const C=invClients().find(x=>x.s===v.client);v.items=v.items||[];v.items.push(s?{name:s.n,desc:s.d,price:s.p||(C&&s.g===(C.grp==="ret"?"mkt":C.grp)?C.amount:0),qty:1}:{name:"",desc:"",price:0,qty:1});invSave();renderInv();return}
   if(b=t.closest("[data-idel]")){v.items.splice(+b.dataset.idel,1);invSave();renderInv();return}
   if(t.closest("[data-invsent]")){v.sent=!v.sent;invSave();renderInv();return}
-  if(t.closest("[data-invpaid]")){const c=invCalc(v);v.paid=c.bal<=0.005&&c.tot>0?0:c.tot;if(v.paid)v.sent=true;invSave();renderInv();return}
+  if(t.closest("[data-invpaid]")){const c=invCalc(v);v.paid=c.bal<=0.005&&c.tot>0?0:c.tot;if(v.paid)v.sent=true;invSave();invSyncMonth(v,!!v.paid);renderInv();return}
   if(t.closest("[data-invdup]")){const S=invS(),n=JSON.parse(JSON.stringify(v));n.id="i"+Date.now();n.no=S.next;S.next=(+S.next||0)+1;n.date=today();n.due=today();n.paid=0;n.sent=false;n.title=(n.title||"").replace(/^(January|February|March|April|May|June|July|August|September|October|November|December)/,FULL[new Date().getMonth()]);S.list.unshift(n);state.invOpen=n.id;invSave();renderInv();return}
   if(b=t.closest("[data-invdel]")){if(!b.dataset.armed){armDel(b);return}const S=invS();S.list=S.list.filter(x=>x.id!==v.id);if(v.no===S.next-1)S.next=v.no;state.invOpen=null;invSave();renderInv();return}
   if(b=t.closest("[data-invpdf]")){invPdf(v,b);return}});
