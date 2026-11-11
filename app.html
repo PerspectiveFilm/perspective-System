@@ -787,7 +787,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
   <!-- INVOICES -->
   <div id="v-inv" hidden>
     <section style="margin-top:40px">
-      <div class="sec-h"><h2>Invoices</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="inv-set-b" type="button">Business details</button><button class="btn" id="inv-new" type="button">+ New invoice</button></div></div>
+      <div class="sec-h"><h2>Invoices</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="inv-set-b" type="button">Business details</button><button class="btn ghost" id="inv-month" type="button" hidden></button><button class="btn" id="inv-new" type="button">+ New invoice</button></div></div>
       <div class="inv-kpis" id="inv-kpis"></div>
       <div id="inv-settings" hidden></div>
       <div id="inv-editor"></div>
@@ -1473,6 +1473,14 @@ const invStatus=v=>{const c=invCalc(v);if(v.items&&c.tot>0&&c.bal<=0.005)return"
 const INV_LBL={paid:"Paid",sent:"Sent",over:"Overdue",draft:"Draft"};
 function invNew(){const S=invS(),d=today(),mo=FULL[new Date().getMonth()];const v={id:"i"+Date.now(),no:S.next,date:d,due:d,client:"",bill:{name:"",addr:"Toronto, Ontario\nCanada",email:""},title:`${mo} Invoice`,items:[],tax:true,paid:0,sent:false,note:""};
   S.list.unshift(v);S.next=(+S.next||0)+1;invSave();state.invOpen=v.id;renderInv();setTimeout(()=>{const s=$("#inv-client");if(s)s.focus()},50)}
+function invMonthly(){const mk=nowKey(),M=(state.months[mk]||{}).clients||[],tm=grpMap(),S=invS(),C=invClients();
+  const done=new Set(S.list.filter(v=>v.mo===mk||(v.date||"").slice(0,7)===mk).map(v=>v.client));
+  return M.filter(x=>x.name&&x.status!=="tax"&&x.status!=="cash"&&["mkt","con"].includes(grpOf(x,tm))).map(x=>{const s=slug(clientKey(x.name));return{x,s,c:C.find(z=>z.s===s)}}).filter(o=>!done.has(o.s)).filter((o,i,A)=>A.findIndex(z=>z.s===o.s)===i)}
+function invMakeMonthly(){const L=invMonthly();if(!L.length)return;const S=invS(),mk=nowKey(),mo=FULL[curIdx],d=today();
+  L.forEach(({x,s,c})=>{const b=(c&&c.bill)||{},name=b.name||(c&&c.name)||x.name,sv=INV_SERVICES.find(z=>z.g===grpOf(x))||INV_SERVICES[0];
+    S.list.unshift({id:"i"+Date.now()+Math.random().toString(36).slice(2,6),no:S.next,date:d,due:d,client:s,mo:mk,bill:{name,addr:b.addr||"Toronto, Ontario\nCanada",email:b.email||""},title:`${mo} Invoice - ${name}`,
+      items:[{name:b.service||sv.n,desc:b.desc||sv.d,price:+x.amount||+b.price||0,qty:1}],tax:b.tax!=null?!!b.tax:rowTaxable(x),paid:0,sent:false,note:""});S.next=(+S.next||0)+1});
+  invSave();state.invF="draft";state.invOpen=null;renderInv()}
 const invCur=()=>invS().list.find(x=>x.id===state.invOpen);
 function invPickClient(s){const v=invCur();if(!v)return;const c=invClients().find(x=>x.s===s);v.client=s;if(!c){invSave();renderInv();return}
   const b=c.bill||{};v.bill={name:b.name||c.name,addr:b.addr||"Toronto, Ontario\nCanada",email:b.email||""};
@@ -1485,6 +1493,7 @@ function renderInv(){const host=$("#inv-list");if(!host)return;const S=invS(),L=
   const F=state.invF||"all";$("#inv-filter").innerHTML=[["all","All"],["draft","Drafts"],["sent","Unpaid"],["paid","Paid"]].map(([k,l])=>`<button type="button" data-invf="${k}" aria-pressed="${F===k}">${l} · ${L.filter(v=>k==="all"||invStatus(v)===k||(k==="sent"&&invStatus(v)==="over")).length}</button>`).join("");
   const vis=L.filter(v=>F==="all"||invStatus(v)===F||(F==="sent"&&invStatus(v)==="over"));
   host.innerHTML=vis.length?vis.map(v=>{const st=invStatus(v);return`<div class="inv-row" data-invopen="${v.id}"><span class="inv-no">#${invNo(v.no)}</span><span class="inv-cl"><b>${esc(v.bill&&v.bill.name||"No client yet")}</b><small>${esc(v.title||"")} · ${esc(v.date||"")}</small></span><span class="inv-amt">${money2(invCalc(v).tot)}</span><span class="inv-st ${st}">${INV_LBL[st]}</span><span></span></div>`}).join(""):`<div class="empty">${L.length?"Nothing here.":"No invoices yet. Click “+ New invoice” to make #"+invNo(S.next)+"."}</div>`;
+  {const b=$("#inv-month");if(b){const n=state.loaded!==false?invMonthly().length:0;b.hidden=!state.canEdit||!((state.months[nowKey()]||{}).clients||[]).length;b.disabled=!n;b.textContent=n?`Make ${FULL[curIdx]} invoices · ${n}`:`${FULL[curIdx]} invoices done ✓`}}
   renderInvEd();renderInvSet()}
 function renderInvEd(){const host=$("#inv-editor");if(!host)return;const v=invCur();if(!v){host.innerHTML="";return}
   if(host.contains(document.activeElement)&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)){invTotals();return}
@@ -1526,6 +1535,7 @@ document.addEventListener("change",e=>{const el=e.target;if(!el.closest||!el.clo
   if(el.dataset.itax!=null&&v){v.tax=el.checked;invSave();invTotals();renderInv()}});
 document.addEventListener("click",e=>{const t=e.target;if(!t.closest||!t.closest("#v-inv"))return;let b;
   if(t.closest("#inv-new")){if(state.canEdit)invNew();return}
+  if(t.closest("#inv-month")){if(state.canEdit)invMakeMonthly();return}
   if(t.closest("#inv-set-b")||t.closest("[data-invsetx]")){state.invSet=!state.invSet;renderInvSet();return}
   if(b=t.closest("[data-invf]")){state.invF=b.dataset.invf;renderInv();return}
   if(b=t.closest("[data-invopen]")){state.invOpen=b.dataset.invopen;renderInv();$("#inv-editor").scrollIntoView({behavior:"smooth",block:"start"});return}
