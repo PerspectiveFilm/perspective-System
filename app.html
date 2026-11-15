@@ -1964,6 +1964,7 @@ function pvCardMon(mk){return pvS().items.reduce((s,x)=>s+(x.kind==="pcc"&&(x.ca
 function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="pcc"||x.kind==="bcc")return s;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
 function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
   if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
+  {const S=pvS();if((S.catV||0)<2){S.items=S.items.filter(x=>!((x.kind==="pcc"||x.kind==="bcc")&&/cash back credit|rewards redemption/i.test(x.raw||"")));S.items.forEach(x=>{if((x.kind==="pcc"||x.kind==="bcc")&&x.raw){if(!x.catM)x.cat=pvCat(x.raw);if(!x.nameM)x.name=pvClean(x.raw)}});S.catV=2;pvSave()}}
   pvFixNeg();{const S=pvS();if(!S.fromFix){S.items.forEach(x=>{if((x.kind||"mon")==="mon"&&x.from==="2026-11")x.from="2026-01"});S.fromFix=1;pvSave()}}
   Y.hidden=false;L.hidden=false;Y.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===pvYear?"selected":""}>${y}</option>`).join("");
   const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0,tc=0;
@@ -1990,8 +1991,14 @@ function pvCats(y){const Y=pvS().items.map((x,j)=>[x,j]).filter(([x])=>(x.kind==
     ${sh.map(([x])=>`<div class="pv-li"><span>${esc(x.name)}<small>${yrDate(x.d)} · ${x.kind==="bcc"?"Business card":"Personal card"}</small></span><b>${money2(x.amount)}</b></div>`).join("")}
     ${L.length>5?`<button class="btn ghost pv-more" data-pmore="${esc(k)}" type="button">${pvMore[k]?"Show less":`Show all ${L.length}`}</button>`:""}</div>`}).join("")}</div>`}
 
-const PV_CATS=["Coffee","Eat out","Groceries","Gas","Car & parking","Shopping","Health","Subscriptions","Entertainment","Travel","Business","Fees & interest","Other"];
-const PV_RULES=[[/second cup|san vito|birds ?& ?beans|starbucks|santos coffee|coffee|cafe|caf[eé]|kung fu tea|zamachi|le beau|casa boho|shelbys|smoothie|coca cola|tim hortons/i,"Coffee"],
+const PV_CATS=["Coffee","Eat out","Groceries","Gas","Car & parking","Shopping","Health","Bills","Subscriptions","Entertainment","Travel","Business","Fees & interest","Other"];
+const PV_RULES=[[/facebk|facebook|meta ?ads|zapier|wetransfer|openai|chatgpt|notion|metricool|free to use|mr ?signs|mgs-business|perspective film|ae\.fc|mrprinter|ac media|ups store|nook studio|canva|google ads|cpc \/ scp/i,"Business"],
+ [/fido|bell mobility|bell canada|rogers|provident|util|hydro|enbridge|insu(r|$)|security national/i,"Bills"],
+ [/netflix|primevideo|prime video|youtube/i,"Subscriptions"],
+ [/la vecchia|huevos|dining|parlour|crepe|fast food|kupfert|restaurant|bistro|sushi|ramen|taco|bbq|steak/i,"Eat out"],
+ [/united meat|butcher/i,"Groceries"],
+ [/rudsak|lululemon|coach|browns|hugo boss|diesel|puma|tommy|trespass|home depot|sakk|kits\.ca|nike|adidas|sport chek/i,"Shopping"],
+ [/second cup|san vito|birds ?& ?beans|starbucks|santos coffee|coffee|cafe|caf[eé]|kung fu tea|zamachi|le beau|casa boho|shelbys|smoothie|coca cola|tim hortons/i,"Coffee"],
  [/mcdonald|chick-fil-a|pizza|eataly|gusto|bagel|souvlaki|sushi|okonomi|poki|trattoria|tapas|shawarma|hyatt|mademoiselle|chudleigh|restaurant|burger|grill|bar &|kitchen|subway|wendy|kfc|popeyes|a&w|uber ?eats|skip/i,"Eat out"],
  [/walmart delivery|apple\.com|disney|bell media|supersim|blizzard|playstation|netflix|spotify|crave|amazon$|prime/i,"Subscriptions"],
  [/acer market|walmart|wal-mart|metro|rabba|campagna|no frills|loblaw|sobeys|food basics|freshco|costco|farm boy|longo/i,"Groceries"],
@@ -2004,17 +2011,17 @@ const PV_RULES=[[/second cup|san vito|birds ?& ?beans|starbucks|santos coffee|co
  [/interest|fee/i,"Fees & interest"],
  [/amzn|amazon|ikea|uniqlo|aldo|jack\s*&?\s*jones|mountain ?warehouse|sleep country|staples|dollarama|winners|best buy|apple store|h&m|zara/i,"Shopping"]];
 const pvCat=n=>{for(const [r,c] of PV_RULES)if(r.test(n))return c;return "Other"};
-const PV_NAMES=[[/^sqsp\*?\s*websit.*/i,"Squarespace Website"],[/^sqsp\*?\s*acuity.*/i,"Squarespace Acuity"],[/^anthropic.*/i,"Claude subscription"],[/^apple\.com\/bill/i,"Apple subscription"],[/^amzn mktp ca.*/i,"Amazon"],[/^wl \*?blizzard.*/i,"Blizzard Entertainment"],[/^tst-/i,""],[/^sq \*/i,""]];
+const PV_NAMES=[[/^facebk.*/i,"Facebook Ads"],[/^fido.*/i,"Fido"],[/^openai.*/i,"ChatGPT"],[/^notion.*/i,"Notion"],[/^zapier.*/i,"Zapier"],[/^google\*?\s*youtube.*/i,"YouTube"],[/^sqsp\*?\s*websit.*/i,"Squarespace Website"],[/^sqsp\*?\s*acuity.*/i,"Squarespace Acuity"],[/^anthropic.*/i,"Claude subscription"],[/^apple\.com\/bill/i,"Apple subscription"],[/^amzn mktp ca.*/i,"Amazon"],[/^wl \*?blizzard.*/i,"Blizzard Entertainment"],[/^tst-/i,""],[/^sq \*/i,""]];
 function pvClean(n){n=String(n||"").replace(/\\/g,"").replace(/\s+/g," ").trim();if(/^olg\b/i.test(n))return "OLG";n=n.replace(/^(impark)\w*/i,"$1").replace(/\*\s*\w*\d\w*$/,"");for(const [r,v] of PV_NAMES){if(r.test(n)){n=v?n.replace(r,v):n.replace(r,"");break}}
   n=n.replace(/\s+\d+\s+Q\d*$/i,"").replace(/\s*#\s*\d+.*$/,"").replace(/\s+(Q\d+|C\d{3,}|[A-Z]{0,3}\d{3,}[A-Z0-9]*)$/i,"").replace(/\s+-\s*$/,"").trim();
   return n.toLowerCase().replace(/(^|[\s\-\/&(])([a-z])/g,(m,a,b)=>a+b.toUpperCase()).replace(/'S\b/g,"'s").replace(/^Mcdonald/,"McDonald")}
 function pvParseCSV(t){const out=[];String(t).split(/\r?\n/).forEach(line=>{if(!line.trim())return;const c=[];let cur="",q=false;for(const ch of line){if(ch==='"'){q=!q;continue}if(ch===","&&!q){c.push(cur);cur="";continue}cur+=ch}c.push(cur);
   const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((c[0]||"").trim());if(!m)return;const desc=(c[1]||"").trim(),deb=parseFloat(c[2])||0,cred=parseFloat(c[3])||0;
-  if(/payment - thank you|^redeem|annual fee/i.test(desc))return;const amt=Math.round((deb-cred)*100)/100;if(!amt)return;
+  if(/payment - thank you|^redeem|annual fee|cash back credit|rewards redemption/i.test(desc))return;const amt=Math.round((deb-cred)*100)/100;if(!amt)return;
   out.push({d:`${m[3]}-${m[1].padStart(2,"0")}-${m[2].padStart(2,"0")}`,raw:desc,amount:amt})});return out}
 function pvRefund(S,k,r){const ref=`${r.d}|${String(r.raw||r.name).toLowerCase()}|${(-r.amount).toFixed(2)}`,nm=pvClean(r.raw||r.name),amt=-r.amount;
   if(S.items.some(x=>(x.refs||[]).includes(ref)))return "dup";
-  const C=S.items.filter(x=>x.kind===k&&(+x.amount||0)>0&&x.name===nm&&String(x.d||"")<=r.d).sort((a,b)=>String(b.d).localeCompare(String(a.d)));
+  const pk=n=>String(n||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").trim().split(/\s+/)[0],C=S.items.filter(x=>x.kind===k&&(+x.amount||0)>0&&pk(x.name)===pk(nm)&&String(x.d||"")<=r.d).sort((a,b)=>String(b.d).localeCompare(String(a.d)));
   const t=C.find(x=>(+x.amount||0)>=amt-0.005);if(!t)return false;if(t.orig==null)t.orig=+t.amount;t.amount=Math.round(((+t.amount||0)-amt)*100)/100;t.refs=[...(t.refs||[]),ref];return true}
 function pvFixNeg(){const S=pvS();let ch=false;S.items=S.items.filter(x=>{if(!((x.kind==="pcc"||x.kind==="bcc")&&(+x.amount||0)<0))return true;const r=pvRefund(S,x.kind,{d:x.d,raw:x.raw||x.name,name:x.name,amount:+x.amount});if(r){ch=true;return false}return true});if(ch)pvSave()}
 function pvImport(k,rows){const S=pvS(),key=x=>`${x.d}|${(x.raw||x.name).toLowerCase()}|${(+(x.orig!=null?x.orig:x.amount)).toFixed(2)}`,have={};S.items.filter(x=>x.kind===k).forEach(x=>{const q=key(x);have[q]=(have[q]||0)+1});
@@ -2031,7 +2038,7 @@ function pvCard(k,title,y){const A=pvS().items.map((x,j)=>[x,j]).filter(([x])=>x
   ${mo.length>5?`<button class="btn ghost pv-more" data-pmore="${k}" type="button">${pvMore[k]?"Show less":`Show all ${mo.length}`}</button>`:""}
   <div class="pv-add pv-cadd" data-pk="${k}"><input class="n" placeholder="What did you buy?"><input class="a" placeholder="$0" inputmode="decimal"><input class="d" type="date" value="${new Date().toLocaleDateString("en-CA")}" aria-label="Date"><button class="btn" data-pcadd type="button">Add</button></div></div>`}
 document.addEventListener("input",async e=>{if(e.target.id!=="pv-pin")return;const el=e.target;el.value=el.value.replace(/\D/g,"").slice(0,4);el.classList.remove("bad");if(el.value.length===4){if(await pvHash(el.value)===PV_H){pvOpen=true;renderPriv()}else{el.classList.add("bad");setTimeout(()=>{el.value=""},300)}}});
-document.addEventListener("change",async e=>{const t=e.target;if(t.dataset&&t.dataset.pimp&&pvOpen){const k=t.dataset.pimp;let rows=[];for(const f of t.files)rows=rows.concat(pvParseCSV(await f.text()));pvNote[k]=null;const n=pvImport(k,rows);pvNote[k]=n?`Added ${n} purchases`:"Nothing new to add";renderPriv();return}if(t.id==="pv-yr"){pvYear=+t.value;renderPriv();return}const r=t.closest&&t.closest(".pv-row");if(!r||!pvOpen)return;const x=pvS().items[+r.dataset.pj];if(!x)return;const f=t.dataset.pf;if(f==="amount")x.amount=Math.round((parseFloat(String(t.value).replace(/[^0-9.\-]/g,""))||0)*100)/100;else if(f)x[f]=t.value;pvSave();renderPriv()});
+document.addEventListener("change",async e=>{const t=e.target;if(t.dataset&&t.dataset.pimp&&pvOpen){const k=t.dataset.pimp;let rows=[];for(const f of t.files)rows=rows.concat(pvParseCSV(await f.text()));pvNote[k]=null;const n=pvImport(k,rows);pvNote[k]=n?`Added ${n} purchases`:"Nothing new to add";renderPriv();return}if(t.id==="pv-yr"){pvYear=+t.value;renderPriv();return}const r=t.closest&&t.closest(".pv-row");if(!r||!pvOpen)return;const x=pvS().items[+r.dataset.pj];if(!x)return;const f=t.dataset.pf;if(f==="cat")x.catM=1;if(f==="name")x.nameM=1;if(f==="amount")x.amount=Math.round((parseFloat(String(t.value).replace(/[^0-9.\-]/g,""))||0)*100)/100;else if(f)x[f]=t.value;pvSave();renderPriv()});
 document.addEventListener("click",e=>{const t=e.target;if(t.closest("#pv-lock")){pvOpen=false;renderPriv();return}if(!pvOpen)return;
   if(t.closest("[data-pmon]")){pvMon=+t.closest("[data-pmon]").dataset.pmon;Object.keys(pvMore).forEach(k=>delete pvMore[k]);renderPriv();return}
   if(t.closest("[data-pmore]")){const k=t.closest("[data-pmore]").dataset.pmore;pvMore[k]=!pvMore[k];renderPriv();return}
