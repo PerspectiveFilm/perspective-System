@@ -744,7 +744,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
   <!-- FINANCES -->
   <div id="v-fin" hidden>
     <section style="margin-top:40px">
-      <div class="sec-h"><h2>All time</h2><div class="bk"><span class="bk-last" id="bk-last"></span><button class="btn" data-backup>Backup to Excel</button></div></div>
+      <div class="sec-h"><h2>All time</h2><div class="bk"><button class="btn ghost" data-pdfm id="top-pdfm">Download month PDF</button><button class="btn" data-pdfy id="top-pdfy">Download year PDF</button></div></div>
       <p class="eyebrow" style="margin:-6px 0 12px">Since April 2021 · CAD</p>
       <div class="kpis" id="all-kpis"></div>
       <div class="card"><svg class="chart" id="chart-all" viewBox="0 0 720 168" role="img" aria-label="Monthly revenue since April 2021"></svg>
@@ -1053,7 +1053,7 @@ async function monthPdf(i,y,btn){
     head(`Clients · ${c.length}`);tbl(["CLIENT","STATUS","AMOUNT"],c.length?rowsC:[["No clients","",""]],{stCol:1,cs:{2:{halign:"right",cellWidth:90},1:{cellWidth:110}}});
     const rt=t.map(x=>[x.name||"",M(+x.amount||0)]),tt=["Total",M(S.pay)];tt._tot=1;
     head("Team · payouts");tbl(["PERSON / JOB","AMOUNT"],t.length?[...rt,tt]:[["Nobody paid this month",""]],{cs:{1:{halign:"right",cellWidth:90}}});
-    const re=e.map(x=>[x.name||"","Logged",M(+x.amount||0)]),ra=A.map(a=>[a.name,a.k==="mon"?"Monthly":a.k==="rec"?"Yearly":"One time",M(a.amt)]),te=["Total","",M(S.exp)];te._tot=1;
+    const re=e.map(x=>[x.name||"","Logged",M(+x.amount||0)]),ra=A.map(a=>[a.name,a.k==="mon"?"Monthly":a.k==="rec"?"Yearly":"One time",M(a.amt)]).concat(cardItems(i,y).map(x=>[bizName(x),`${x.kind==="bcc"?"Business":"Personal"} card · ${MONTHS[+String(x.d).slice(5,7)-1]} ${+String(x.d).slice(8,10)}`,M(x.amount)])),te=["Total","",M(S.exp)];te._tot=1;
     head("Expenses");tbl(["EXPENSE","TYPE","AMOUNT"],re.length||ra.length?[...re,...ra,te]:[["No expenses",""," "]],{cs:{2:{halign:"right",cellWidth:90},1:{cellWidth:110}}});
     if(Y>d.internal.pageSize.getHeight()-90){d.addPage();Y=60}
     d.setFillColor(252,246,234);d.setDrawColor(...acc);d.roundedRect(L,Y-6,W-2*L,46,6,6,"FD");d.setFontSize(9);d.setTextColor(...mut);d.text("PROFIT",L+14,Y+12);
@@ -1065,6 +1065,44 @@ async function monthPdf(i,y,btn){
   }catch(err){console.warn(err);alert("Couldn't make the PDF. Check your internet and try again.")}
   finally{if(btn){btn.disabled=false;btn.textContent=t0}}
 }
+
+async function yearPdf(y,btn){
+  const t0=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent="Making PDF…"}
+  try{await loadPdf();
+    const {jsPDF}=window.jspdf,d=new jsPDF({unit:"pt",format:"a4"}),W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),L=40;
+    const ink=[24,24,22],mut=[120,120,114],acc=[226,164,60],ok=[46,140,90],bad=[200,70,60],line=[226,226,220],M=n=>money(n);
+    const last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),idx=[...Array(last+1).keys()],SS=idx.map(i=>stats(i,y));
+    const T=k=>SS.reduce((s,x)=>s+(x[k]||0),0),rev=T("rev"),pay=T("pay"),exp=T("exp"),prof=T("profit"),got=T("got"),out=T("out");
+    d.setFillColor(...ink);d.rect(0,0,W,86,"F");d.setTextColor(255,255,255);d.setFont("helvetica","bold");d.setFontSize(20);d.text(`${y} year report`,L,46);
+    d.setFont("helvetica","normal");d.setFontSize(10);d.setTextColor(200,200,192);d.text(`Perspective Film · ${FULL[0]} – ${FULL[Math.max(0,last)]} ${y}`,L,64);
+    d.text("Made "+new Date().toLocaleDateString("en-CA",{year:"numeric",month:"short",day:"numeric"}),W-L,64,{align:"right"});
+    const K=[["Revenue",M(rev),ink],["Received",M(got),ok],["Outstanding",M(out),out?bad:ink],["Team",M(pay),ink],["Expenses",M(exp),ink],["Profit",M(prof),acc]];
+    const bw=(W-2*L-5*8)/6;K.forEach(([l,v,col],k)=>{const x=L+k*(bw+8),yy=106;d.setDrawColor(...line);d.setFillColor(250,250,247);d.roundedRect(x,yy,bw,52,6,6,"FD");
+      d.setFontSize(7.5);d.setTextColor(...mut);d.text(l.toUpperCase(),x+9,yy+17);d.setFont("helvetica","bold");d.setFontSize(12.5);d.setTextColor(...col);d.text(v,x+9,yy+38);d.setFont("helvetica","normal")});
+    let Y=184;
+    const head=t=>{if(Y>H-130){d.addPage();Y=60}d.setFont("helvetica","bold");d.setFontSize(11);d.setTextColor(...ink);d.text(t,L,Y);d.setFont("helvetica","normal");Y+=8};
+    const tbl=(cols,rows,cs={})=>{d.autoTable({startY:Y,margin:{left:L,right:L},head:[cols],body:rows,theme:"plain",styles:{font:"helvetica",fontSize:9.5,textColor:ink,cellPadding:{top:5,bottom:5,left:6,right:6},lineColor:line,lineWidth:{bottom:.5}},
+      headStyles:{fontSize:7.5,textColor:mut,fontStyle:"bold"},columnStyles:cs,didParseCell:h=>{const c=cs[h.column.index];if(h.section==="head"&&c&&c.halign)h.cell.styles.halign=c.halign;const r=h.row.raw;if(h.section==="body"&&r&&r._tot){h.cell.styles.fontStyle="bold";h.cell.styles.lineWidth={top:1,bottom:0};h.cell.styles.lineColor=ink}}});Y=d.lastAutoTable.finalY+26};
+    const R={halign:"right"};
+    const rm=idx.map((i,k)=>[FULL[i],M(SS[k].rev),M(SS[k].pay),M(SS[k].exp),M(SS[k].profit)]),tr=["Total",M(rev),M(pay),M(exp),M(prof)];tr._tot=1;
+    head("Month by month");tbl(["MONTH","REVENUE","TEAM","EXPENSES","PROFIT"],[...rm,tr],{1:R,2:R,3:R,4:R});
+    const cl={},cn={};idx.forEach(i=>((state.months[key(i,y)]||{}).clients||[]).filter(x=>x.status!=="tax"&&x.name).forEach(x=>{const k=clientKey(x.name);if(!cn[k])cn[k]=String(x.name).replace(/\s*\d+$/,"").trim();cl[k]=(cl[k]||0)+(+x.amount||0)}));
+    const rc=Object.entries(cl).sort((a,b)=>b[1]-a[1]).map(([n,v])=>[cn[n]||n,M(v)]),tc=["Total (before HST)",M(Object.values(cl).reduce((a,b)=>a+b,0))];tc._tot=1;
+    head(`Clients · ${rc.length}`);tbl(["CLIENT","REVENUE"],[...rc,tc],{1:R});
+    const tp={};idx.forEach(i=>((state.months[key(i,y)]||{}).team||[]).forEach(x=>{const n=String(x.name||"").split(/\s*[-–\/]\s*/)[0].trim()||"Other";tp[n]=(tp[n]||0)+(+x.amount||0)}));
+    const rt=Object.entries(tp).sort((a,b)=>b[1]-a[1]).map(([n,v])=>[n,M(v)]),tt=["Total",M(pay)];tt._tot=1;head("Team");tbl(["PERSON","PAID"],rt.length?[...rt,tt]:[["Nobody paid",""]],{1:R});
+    const bx={};let man=0;idx.forEach(i=>{cardItems(i,y).forEach(x=>{const g=BIZ_G[bizGrp(x)][0],n=bizName(x);bx[g]=bx[g]||{};bx[g][n]=(bx[g][n]||0)+(+x.amount||0)});man+=((state.months[key(i,y)]||{}).expenses||[]).reduce((s,x)=>s+(+x.amount||0),0)});
+    const re=[];BIZ_G.forEach(([g])=>{const G=bx[g];if(!G)return;const sep=[g.toUpperCase(),M(Object.values(G).reduce((a,b)=>a+b,0))];sep._tot=0;re.push(sep);Object.entries(G).sort((a,b)=>b[1]-a[1]).forEach(([n,v])=>re.push(["   "+n,M(v)]))});
+    if(man)re.push(["Logged by hand",M(man)]);const te=["Total",M(exp)];te._tot=1;head("Business expenses");tbl(["EXPENSE","AMOUNT"],[...re,te],{1:R});
+    const inv=yrItems(y).filter(x=>x.kind==="inv");if(inv.length){const ri=inv.map(x=>[x.name,M(+x.amount||0)]),ti=["Total",M(inv.reduce((s,x)=>s+(+x.amount||0),0))];ti._tot=1;head("Investments / equipment");tbl(["ITEM","AMOUNT"],[...ri,ti],{1:R})}
+    if(Y>H-90){d.addPage();Y=60}d.setFillColor(252,246,234);d.setDrawColor(...acc);d.roundedRect(L,Y-6,W-2*L,46,6,6,"FD");d.setFontSize(9);d.setTextColor(...mut);d.text("PROFIT "+y,L+14,Y+12);
+    d.setFontSize(8.5);d.text(`${M(rev)} revenue - ${M(pay)} team - ${M(exp)} expenses`,L+14,Y+28);d.setFont("helvetica","bold");d.setFontSize(18);d.setTextColor(...acc);d.text(M(prof),W-L-14,Y+24,{align:"right"});
+    const n=d.getNumberOfPages();for(let p=1;p<=n;p++){d.setPage(p);d.setFont("helvetica","normal");d.setFontSize(8);d.setTextColor(...mut);d.text(`perspectivefilm.ca · ${y} year report`,L,H-22);d.text(`${p} / ${n}`,W-L,H-22,{align:"right"})}
+    const fn=`Perspective-Film-${y}.pdf`;const dl=window.claude&&window.claude.use?await window.claude.use("downloads").catch(()=>null):null;if(dl){await dl.save({filename:fn,data:d.output("blob")}).catch(()=>{})}else d.save(fn);
+  }catch(err){console.warn(err);alert("Couldn't make the PDF. Check your internet and try again.")}
+  finally{if(btn){btn.disabled=false;btn.textContent=t0}}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-pdfm],[data-pdfy]");if(!b)return;if(b.matches("[data-pdfm]"))monthPdf(state.sel,state.year,b);else yearPdf(state.year,b)});
+function topPdfLabels(){const a=$("#top-pdfm"),b=$("#top-pdfy");if(a)a.textContent=`Download ${FULL[state.sel]} PDF`;if(b)b.textContent=`Download ${state.year} PDF`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-pdf]");if(!b)return;const h=b.closest("[data-m]");if(!h)return;monthPdf(+h.dataset.m,+h.dataset.y,b)});
 
 async function saveMonth(i,m,y){
@@ -2482,7 +2520,7 @@ function render(){
     $("#home-board").innerHTML=`<div class="card empty">Opening the books…</div>`;
     $("#fin-board").innerHTML=`<div class="card empty">Opening the books…</div>`;
   }
-  renderDebtors();try{renderHomeKpis()}catch(e){console.warn(e)}try{renderBizCards()}catch(e){console.warn(e)}try{renderYearly()}catch(e){console.warn(e)}try{renderCheck()}catch(e){console.warn(e)}try{renderInv()}catch(e){console.warn(e)}drawChart($("#chart-fin"));drawAllTime($("#chart-all"));
+  renderDebtors();try{topPdfLabels()}catch(e){}try{renderHomeKpis()}catch(e){console.warn(e)}try{renderBizCards()}catch(e){console.warn(e)}try{renderYearly()}catch(e){console.warn(e)}try{renderCheck()}catch(e){console.warn(e)}try{renderInv()}catch(e){console.warn(e)}drawChart($("#chart-fin"));drawAllTime($("#chart-all"));
   // home: current month
   const hs=stats(curIdx,YEAR);
   $("#home-month-title").textContent=FULL[curIdx];
