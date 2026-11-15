@@ -647,6 +647,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf .biz-li:hover .biz-n{color:var(--accent)}
 #pf .biz-d{display:grid;gap:5px;padding:2px 0 10px;font-size:12px}#pf .biz-d div{display:flex;justify-content:space-between;gap:10px}#pf .biz-d span{color:var(--muted)}#pf .biz-d b{font-weight:500;text-align:right;overflow-wrap:anywhere}
 @media (min-width:1000px){#pf{zoom:1.1}}
+#pf .pf-arm{background:var(--unpaid)!important;color:#fff!important;border-color:var(--unpaid)!important;border-radius:999px!important;padding:2px 8px!important;width:auto!important;min-width:0!important;font-size:11px!important;font-weight:600!important;white-space:nowrap!important;opacity:1!important;line-height:1.4!important}
 /* private */
 #pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
 #pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
@@ -1986,6 +1987,13 @@ function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(s
     ${sh.map(x=>bizRow(x,S)).join("")||`<p class="ro-note" style="margin:6px 0">Nothing in ${FULL[state.sel]}</p>`}
     ${L.length>5?`<button class="btn ghost pv-more" data-bmore="${i}" type="button">${bizMore[i]?"Show less":`Show all ${L.length}`}</button>`:""}</div>`}).join("")}</div>`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-bmore]");if(!b)return;bizMore[b.dataset.bmore]=!bizMore[b.dataset.bmore];renderBizCards()});
+/* ---------- ask twice before removing anything ---------- */
+(function(){const SEL='[data-ckdel],[data-ckrm],[data-cxoff],[data-hpdel],[data-idel],[data-ldel],[data-ldelsec],[data-lkdel],[data-lkdelg],[data-pdel],[data-qdel],[data-qdelg],[data-sdel],[data-sdelc],[data-sdelg],[data-sdelsec],[data-ydel],[data-zdel],[data-zdelsec],[data-act="del"],button[aria-label^="Remove"],button[aria-label^="Delete"],button[title^="Remove"],button[title^="Delete"]';
+  let armed=null,tm=null;const disarm=()=>{if(armed){armed.classList.remove("pf-arm");if(armed.dataset.pfTxt!=null){armed.innerHTML=armed.dataset.pfTxt;delete armed.dataset.pfTxt}}armed=null;clearTimeout(tm)};
+  document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(SEL);if(!b||b.closest("[data-pclr]")||b.matches("[data-pclr],[data-aoff],[data-invdel]")){if(armed&&!(b&&b===armed))disarm();return}
+    if(armed===b){disarm();return}
+    disarm();e.preventDefault();e.stopImmediatePropagation();armed=b;b.dataset.pfTxt=b.innerHTML;b.classList.add("pf-arm");b.innerHTML=b.textContent.trim().length>2?"Sure? Click again":"Sure?";tm=setTimeout(disarm,3500)},true);
+})();
 /* ---------- private (personal finances) ---------- */
 let pvOpen=false,pvYear=YEAR;
 const PV_H="7ab1568cd1ba1fde";
