@@ -619,6 +619,30 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf #yr-card .yr-nm{line-height:1.25}
 #pf #yr-card .c-sep{margin-top:10px}
 @media (max-width:520px){#pf #yr-card .yr-row:has(.yr-grip),#pf #yr-card .yr-hd{grid-template-columns:10px minmax(0,1fr) 78px 60px 14px!important}}
+
+@media (max-width:520px){#pf nav.top .tabs{overflow-x:auto;scrollbar-width:none;min-width:0;flex-wrap:nowrap}#pf nav.top .tabs::-webkit-scrollbar{display:none}#pf .pv-t th,#pf .pv-t td{padding:8px 5px;font-size:13px}#pf .pv-t th{font-size:10px}}
+/* private */
+#pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
+#pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
+#pf .pv-pin{width:150px;text-align:center;font-size:24px;letter-spacing:.5em;padding:10px 0 10px .5em;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);font-family:var(--mono)}
+#pf .pv-pin.bad{border-color:var(--unpaid);animation:pvshake .3s}@keyframes pvshake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#pf .pv-yr{background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px}
+#pf .pv-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
+@media (max-width:860px){#pf .pv-grid{grid-template-columns:1fr}}
+#pf .pv-t td.w{color:var(--paid)}#pf .pv-t td.e{color:var(--unpaid)}#pf .pv-t td.l{font-weight:600}#pf .pv-t td.l.neg{color:var(--unpaid)}
+#pf .pv-t tr.cur td{background:var(--soft)}#pf .pv-t tr.tot td{font-weight:600;border-top:2px solid var(--line)}#pf .pv-t tr.fut td{opacity:.45}
+#pf .pv-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 22px;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+#pf .pv-row:first-of-type{border-top:0}
+#pf .pv-row input{background:transparent;border:0;color:var(--ink);font:inherit;font-size:15px;width:100%;padding:2px 4px;margin:0 -4px;border-radius:6px}
+#pf .pv-row input:focus{outline:none;background:var(--soft)}#pf .pv-row input.a{text-align:right}
+#pf .pv-row small{display:block;color:var(--muted);font-size:12px;margin-top:1px}
+#pf .pv-row small select{background:transparent;border:0;color:var(--muted);font:inherit;font-size:12px;padding:0;cursor:pointer}
+#pf .pv-row .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:0}#pf .pv-row .x:hover{color:var(--unpaid)}
+#pf .pv-h{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 4px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#pf .pv-h:first-child{margin-top:0}
+#pf .pv-add{display:grid;grid-template-columns:minmax(0,1fr) 90px 104px auto;gap:8px;margin-top:14px}
+#pf .pv-add input,#pf .pv-add select{background:var(--soft);border:1px solid var(--line);border-radius:10px;color:var(--ink);font:inherit;font-size:13px;padding:8px 10px;min-width:0}
+@media (max-width:520px){#pf .pv-add{grid-template-columns:1fr 1fr}#pf .pv-add input#pv-an{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -649,6 +673,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
     <div class="navdd" data-views="leads,questions,pipe"><button data-go="leads" aria-haspopup="true">Leads ▾</button><div class="ddmenu"><div><button data-go="leads">Templates</button><button data-go="questions">Discovery call</button><button data-go="pipe">Pipeline</button></div></div></div>
     <button data-go="system">System</button>
     <button data-go="learn">Learning</button>
+    <button data-go="priv">Private</button>
   </div>
 </div></nav>
 
@@ -813,6 +838,12 @@ html.p-lock,html.p-lock body{overflow:hidden}
   </div>
 
   <!-- LEARNING -->
+  <div id="v-priv" hidden>
+    <section style="margin-top:40px">
+      <div class="sec-h"><h2>Private</h2><div style="display:flex;gap:8px;align-items:center"><select class="pv-yr" id="pv-yr" aria-label="Year" hidden></select><button class="btn ghost" id="pv-lock" type="button" hidden>Lock</button></div></div>
+      <div id="pv-body"></div>
+    </section>
+  </div>
   <div id="v-learn" hidden>
     <section style="margin-top:40px">
       <div class="sec-h"><h2>Learning</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="csearch" id="lsearch" type="search" placeholder="Search notes" aria-label="Search notes"><button class="btn" id="l-edit">Edit</button></div></div>
@@ -873,7 +904,7 @@ function stats(i,y=state.year){
 /* ---------- views ---------- */
 function go(v){
   if(v==="road")v="system";state.view=v;
-  for(const id of ["home","fin","clients","inv","road","learn","system","leads","questions","pipe"]) $("#v-"+id).hidden=id!==v;
+  if(v!=="priv")privLock();for(const id of ["home","fin","clients","inv","road","learn","system","leads","questions","pipe","priv"]) $("#v-"+id).hidden=id!==v;if(v==="priv")renderPriv();
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.go===v));
   const NL={system:"System",learn:"Learning",leads:"Leads",questions:"Leads",pipe:"Leads"};document.querySelectorAll(".navdd").forEach(n=>{const vs=n.dataset.views.split(","),b=n.querySelector(":scope>button"),on=vs.includes(v);b.setAttribute("aria-current",on);b.firstChild.textContent=(on?NL[v]:NL[vs[0]])+" ▾"});
   if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".navdd"))document.activeElement.blur();
@@ -1904,6 +1935,38 @@ document.addEventListener("click",async e=>{
   for(const mk of Object.keys(byM)){const it0=byM[mk][0],m=clone(it0.i,it0.y);byM[mk].forEach(it=>{const x=m.clients[it.j];if(x)x.status=CASH_CLIENT.test(x.name.trim())?"cash":"paid"});await saveMonth(it0.i,m,it0.y)}
 });
 
+/* ---------- private (personal finances) ---------- */
+let pvOpen=false,pvYear=YEAR;
+const PV_H="7ab1568cd1ba1fde";
+async function pvHash(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("pf-priv:"+t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,16)}
+function privLock(){if(!pvOpen)return;pvOpen=false;const b=$("#pv-body");if(b)b.innerHTML=""}
+const pvS=()=>{if(!state.priv||typeof state.priv!=="object")state.priv={items:[]};if(!Array.isArray(state.priv.items))state.priv.items=[];return state.priv};
+function pvSave(){try{localStorage.setItem("pf-priv",JSON.stringify(pvS()))}catch(e){}}
+const pvMk=(y,i)=>`${y}-${String(i+1).padStart(2,"0")}`;
+const pvLabel=mk=>{const [y,m]=mk.split("-");return MONTHS[+m-1]+" "+y};
+function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
+function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
+  if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
+  Y.hidden=false;L.hidden=false;Y.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===pvYear?"selected":""}>${y}</option>`).join("");
+  const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0;
+  for(let i=0;i<12;i++){const mk=pvMk(y,i),fut=i>last;let w=0;try{w=stats(i,y).profit}catch(e){}const e=pvMonthExp(mk),l=w-e;if(!fut){tw+=w;te+=e}
+    rows.push(`<tr class="${fut?"fut":""}${y===now.getFullYear()&&i===now.getMonth()?" cur":""}"><td>${FULL[i]}</td><td class="w">${money(w)}</td><td class="e">${e?money(e):"—"}</td><td class="l${l<0?" neg":""}">${money(l)}</td></tr>`)}
+  const S=pvS(),mon=S.items.map((x,j)=>[x,j]).filter(([x])=>x.kind!=="one"),one=S.items.map((x,j)=>[x,j]).filter(([x])=>x.kind==="one"&&(x.m||"").startsWith(y+"-"));
+  const mopts=sel=>{let o="";for(let yy=YEARS[YEARS.length-1]+1;yy>=YEARS[0];yy--)for(let i=11;i>=0;i--){const k=pvMk(yy,i);o+=`<option value="${k}" ${k===sel?"selected":""}>${pvLabel(k)}</option>`}return o};
+  const row=([x,j])=>`<div class="pv-row" data-pj="${j}"><span><input data-pf="name" value="${esc(x.name)}" aria-label="Name"><small>${x.kind==="one"?`One time · <select data-pf="m">${mopts(x.m)}</select>`:`Monthly from <select data-pf="from">${mopts(x.from)}</select>`}</small></span><input class="a" data-pf="amount" inputmode="decimal" value="${(+x.amount||0).toFixed(2)}" aria-label="Amount"><button class="x" data-pdel title="Remove" aria-label="Remove">×</button></div>`;
+  const monTot=mon.reduce((s,[x])=>s+(+x.amount||0),0),oneTot=one.reduce((s,[x])=>s+(+x.amount||0),0);
+  B.innerHTML=`<div class="kpis k3">${kpi("Wage "+y,money(tw),"good")}${kpi("Home expenses "+y,money(te),"bad")}${kpi("Left "+y,money(tw-te),tw-te<0?"bad":"acc")}</div>
+  <div class="pv-grid"><div class="card scroll"><table class="yt pv-t"><tr><th>Month</th><th>Wage</th><th>Home exp.</th><th>Left</th></tr>${rows.join("")}<tr class="tot"><td>Total</td><td class="w">${money(tw)}</td><td class="e">${money(te)}</td><td class="l${tw-te<0?" neg":""}">${money(tw-te)}</td></tr></table></div>
+  <div class="card"><div class="pv-h"><span>Monthly home expenses</span><span>${money2(monTot)} / mo</span></div>${mon.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
+  <div class="pv-h"><span>One time · ${y}</span><span>${money2(oneTot)}</span></div>${one.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
+  <div class="pv-add"><input id="pv-an" placeholder="Expense (rent, car…)"><input id="pv-aa" placeholder="$0" inputmode="decimal"><select id="pv-ak"><option value="mon">Monthly</option><option value="one">One time</option></select><button class="btn" id="pv-ab" type="button">Add</button></div>
+  <p class="ro-note" style="margin-top:10px">Wage = your business profit each month (Finances). Only you can see this page.</p></div></div>`}
+document.addEventListener("input",async e=>{if(e.target.id!=="pv-pin")return;const el=e.target;el.value=el.value.replace(/\D/g,"").slice(0,4);el.classList.remove("bad");if(el.value.length===4){if(await pvHash(el.value)===PV_H){pvOpen=true;renderPriv()}else{el.classList.add("bad");setTimeout(()=>{el.value=""},300)}}});
+document.addEventListener("change",e=>{const t=e.target;if(t.id==="pv-yr"){pvYear=+t.value;renderPriv();return}const r=t.closest&&t.closest(".pv-row");if(!r||!pvOpen)return;const x=pvS().items[+r.dataset.pj];if(!x)return;const f=t.dataset.pf;if(f==="amount")x.amount=Math.round((parseFloat(String(t.value).replace(/[^0-9.\-]/g,""))||0)*100)/100;else if(f)x[f]=t.value;pvSave();renderPriv()});
+document.addEventListener("click",e=>{const t=e.target;if(t.closest("#pv-lock")){pvOpen=false;renderPriv();return}if(!pvOpen)return;
+  if(t.closest("[data-pdel]")){const r=t.closest(".pv-row");pvS().items.splice(+r.dataset.pj,1);pvSave();renderPriv();return}
+  if(t.closest("#pv-ab")){const n=$("#pv-an").value.trim(),a=Math.round((parseFloat($("#pv-aa").value.replace(/[^0-9.\-]/g,""))||0)*100)/100,k=$("#pv-ak").value;if(!n)return;const mk=pvMk(now.getFullYear(),now.getMonth());pvS().items.push(k==="one"?{name:n,amount:a,kind:"one",m:mk}:{name:n,amount:a,kind:"mon",from:mk});pvSave();renderPriv()}});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.target.id==="pv-an"||e.target.id==="pv-aa")){e.preventDefault();$("#pv-ab").click()}});
 /* ---------- undo / redo ---------- */
 (function(){
   const canon=v=>Array.isArray(v)?"["+v.map(canon).join(",")+"]":v&&typeof v==="object"?"{"+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}":JSON.stringify(v===undefined?null:v);
@@ -2352,7 +2415,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&driveT){cl
     let ch=false;applying=true;try{for(const k of KEYS)if(data[k]!=null&&!(k in dirty)&&localStorage.getItem(k)!==data[k]){rawSet.call(localStorage,k,data[k]);ch=true}}finally{applying=false}
     if(!ch)return;const J=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
     loadLocal();const cm=J("pf-cmeta");if(cm)state.cmeta=cm;const pv=J("pf-pipe");if(Array.isArray(pv))state.pipe=pv;const qv=J("pf-qs");if(qv&&Array.isArray(qv.groups))state.qs=qv;
-    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;
+    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;const pvd=J("pf-priv");if(pvd){state.priv=pvd;try{if(state.view==="priv"&&pvOpen)renderPriv()}catch(e){}}
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
@@ -2369,7 +2432,7 @@ render();
   if(!state.canEdit){$("#ro-note").hidden=false;document.querySelectorAll(".tadd").forEach(h=>h.innerHTML="")}
   db=d||null;
   if(!db){try{const pv=JSON.parse(localStorage.getItem("pf-pipe"));if(Array.isArray(pv)){state.pipe=pv;renderPipe()}}catch(e){}try{const qv=JSON.parse(localStorage.getItem("pf-qs"));if(qv&&Array.isArray(qv.groups)){state.qs=qv;renderQs()}}catch(e){}try{const zv=JSON.parse(localStorage.getItem("pf-leads"));if(Array.isArray(zv)){state.leads=zv;renderLeads()}}catch(e){}try{const sv=JSON.parse(localStorage.getItem("pf-sys"));if(Array.isArray(sv)){state.sys=sv;renderSys()}}catch(e){}try{const v=JSON.parse(localStorage.getItem("pf-learn"));if(Array.isArray(v))state.learn=v;const lk=JSON.parse(localStorage.getItem("pf-links"));if(Array.isArray(lk))state.links=lk}catch(e){}if(!state.learn.length)state.learn=learnDefaults();renderLearn();lrShow()}
-  if(!db){try{state.inv=JSON.parse(localStorage.getItem("pf-inv"))||null}catch(e){}try{state.check=JSON.parse(localStorage.getItem("pf-check"))||{}}catch(e){}try{const SEEDV="2026-10-16c",seed=state.yearly,yv=JSON.parse(localStorage.getItem("pf-yearly"));if(yv)state.yearly=yv;if(localStorage.getItem("pf-yearly-v")!==SEEDV){state.yearly={...(yv||{}),...seed};localStorage.setItem("pf-yearly",JSON.stringify(state.yearly));localStorage.setItem("pf-yearly-v",SEEDV)}}catch(e){}}
+  if(!db){try{state.priv=JSON.parse(localStorage.getItem("pf-priv"))||null}catch(e){}try{state.inv=JSON.parse(localStorage.getItem("pf-inv"))||null}catch(e){}try{state.check=JSON.parse(localStorage.getItem("pf-check"))||{}}catch(e){}try{const SEEDV="2026-10-16c",seed=state.yearly,yv=JSON.parse(localStorage.getItem("pf-yearly"));if(yv)state.yearly=yv;if(localStorage.getItem("pf-yearly-v")!==SEEDV){state.yearly={...(yv||{}),...seed};localStorage.setItem("pf-yearly",JSON.stringify(state.yearly));localStorage.setItem("pf-yearly-v",SEEDV)}}catch(e){}}
   if(!db){state.cmeta={};try{state.cmeta=JSON.parse(localStorage.getItem("pf-cmeta"))||state.cmeta}catch(e){}}
   if(!db){loadLocal();state.loaded=true;render();return}
   let gotM=false,gotT=false;
@@ -2395,7 +2458,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,getRedirectResult,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,collection,getDocs,doc,writeBatch,onSnapshot,getDoc,setDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyB2xBVxiiY0lIX_wxLA9fbxkpk_raVoY6M",authDomain:"perspective-system.firebaseapp.com",projectId:"perspective-system",storageBucket:"perspective-system.firebasestorage.app",messagingSenderId:"171395012972",appId:"1:171395012972:web:209e3ba575c50914a23b49"};
-const OWNER="perspectivefilm.ca@gmail.com",KEYS=["pf-months-v2","pf-todos-v2","pf-cmeta","pf-learn","pf-links","pf-sys","pf-leads","pf-qs","pf-pipe","pf-check","pf-yearly","pf-inv"];
+const OWNER="perspectivefilm.ca@gmail.com",KEYS=["pf-months-v2","pf-todos-v2","pf-cmeta","pf-learn","pf-links","pf-sys","pf-leads","pf-qs","pf-pipe","pf-check","pf-yearly","pf-inv","pf-priv"];
 const app=initializeApp(cfg),auth=getAuth(app),fs=getFirestore(app),col=collection(fs,"hq");
 const $=id=>document.getElementById(id),T=t=>{$("pf-lockt").textContent=t},M=t=>{$("pf-lockm").textContent=t||""};
 const dayId=()=>new Date().toLocaleDateString("en-CA");
