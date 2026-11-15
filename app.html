@@ -2482,7 +2482,7 @@ function render(){
   // finances
   const all=MONTHS.map((_,i)=>stats(i)),toDate=all.slice(0,lastIdx(state.year)+1),ytd=state.year<YEAR?"":" YTD";
   const tot=f=>toDate.reduce((s,x)=>s+x[f],0);
-  $("#year-kpis").innerHTML=kpi(state.year+" revenue"+ytd,money(tot("rev")))+kpi("Received"+ytd,money(tot("got")),"good")+kpi("Outstanding",money(tot("out")),"bad")+kpi("Profit"+ytd,money(tot("profit")),"acc");
+  $("#year-kpis").className="kpis k3";$("#year-kpis").innerHTML=kpi("Revenue"+ytd,money(tot("rev")),"acc")+kpi("Expenses"+ytd,money(tot("rev")-tot("profit")),"bad")+kpi("Profit"+ytd,money(tot("profit")),"good");
   $("#year-picker").innerHTML=YEARS.map(y=>`<button aria-pressed="${y===state.year}" data-year="${y}">${y}</button>`).join("");
   $("#month-picker").innerHTML=MONTHS.map((m,i)=>`<button aria-pressed="${i===state.sel}" data-pick="${i}">${m}</button>`).join("");
   const s=stats(state.sel);
