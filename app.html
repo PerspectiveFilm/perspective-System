@@ -1954,9 +1954,9 @@ document.addEventListener("click",async e=>{
 });
 
 /* ---------- business card expenses (view only, not counted) ---------- */
-const BIZ_G=[["Ads",/facebook|facebk|meta|google ads|instagram|mr ?signs|signs|print/i],["Subscriptions",/adobe|metricool|zapier|notion|chatgpt|openai|claude|anthropic|canva|uppbeat|free to use|wetransfer|pdffiller|dropbox|capcut|epidemic|artlist|squarespace|sqsp|acuity|domain|wix|godaddy|apple|youtube|google one|icloud|netflix|google/i],["Car, gas & parking",/uber(?! ?eats)|lyft|shell|esso|petro|husky|ultramar|pioneer|parking|park(edin|link)|indigo|impark|407|green p|air-serv/i],["Other",/./]];
-const bizIs=x=>(x.kind==="pcc"||x.kind==="bcc")&&(["Business","Gas","Car & parking"].includes(x.cat||"")||/apple|youtube|google one|icloud|uber(?! ?eats)/i.test((x.name||"")+" "+(x.raw||"")));
-const bizGrp=x=>{const t=(x.name||"")+" "+(x.raw||"");if(/apple|youtube|google one|icloud/i.test(t))return 1;if(x.cat==="Gas"||x.cat==="Car & parking")return 2;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
+const BIZ_G=[["Ads",/facebook|facebk|meta|google ads|instagram|mr ?signs|signs|print/i],["Subscriptions",/adobe|metricool|zapier|notion|chatgpt|openai|claude|anthropic|canva|uppbeat|free to use|wetransfer|pdffiller|dropbox|capcut|epidemic|artlist|squarespace|sqsp|acuity|domain|wix|godaddy|apple\.com|apple subscr|youtube|google ?\*?\s*google one|google one|icloud|netflix|google/i],["Car, gas & parking",/uber(?! ?eats)|lyft|shell|\besso\b|petro|husky|ultramar|pioneer|parking|park(edin|link)|indigo|impark|407|green p|air-serv/i],["Other",/./]];
+const bizIs=x=>(x.kind==="pcc"||x.kind==="bcc")&&(["Business","Gas","Car & parking"].includes(x.cat||"")||/apple\.com|apple subscr|youtube|google ?\*?\s*google one|google one|icloud|uber(?! ?eats)/i.test((x.name||"")+" "+(x.raw||"")));
+const bizGrp=x=>{const t=(x.name||"")+" "+(x.raw||"");if(/apple\.com|apple subscr|youtube|google ?\*?\s*google one|google one|icloud/i.test(t))return 1;if(x.cat==="Gas"||x.cat==="Car & parking")return 2;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
 const bizMore={};
 function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(state.priv&&state.priv.items)||JSON.parse(localStorage.getItem("pf-priv")||"{}").items||[]}catch(e){}
   const y=state.year,mk=key(state.sel,y),A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(!A.length){H.innerHTML="";return}
@@ -1980,7 +1980,7 @@ function pvCardMon(mk){return pvS().items.reduce((s,x)=>s+((x.kind==="pcc"||x.ki
 function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="pcc"||x.kind==="bcc")return s;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
 function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
   if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
-  {const S=pvS();if((S.catV||0)<2){S.items=S.items.filter(x=>!((x.kind==="pcc"||x.kind==="bcc")&&/cash back credit|rewards redemption/i.test(x.raw||"")));S.items.forEach(x=>{if((x.kind==="pcc"||x.kind==="bcc")&&x.raw){if(!x.catM)x.cat=pvCat(x.raw);if(!x.nameM)x.name=pvClean(x.raw)}});S.catV=2;pvSave()}}
+  {const S=pvS();if((S.catV||0)<3){S.items=S.items.filter(x=>!((x.kind==="pcc"||x.kind==="bcc")&&/cash back credit|rewards redemption/i.test(x.raw||"")));S.items.forEach(x=>{if((x.kind==="pcc"||x.kind==="bcc")&&x.raw){if(!x.catM)x.cat=pvCat(x.raw);if(!x.nameM)x.name=pvClean(x.raw)}});S.catV=3;pvSave()}}
   pvFixNeg();{const S=pvS();if(!S.fromFix){S.items.forEach(x=>{if((x.kind||"mon")==="mon"&&x.from==="2026-11")x.from="2026-01"});S.fromFix=1;pvSave()}}
   Y.hidden=false;L.hidden=false;Y.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===pvYear?"selected":""}>${y}</option>`).join("");
   const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0,tc=0;
@@ -2019,7 +2019,7 @@ const PV_RULES=[[/wizz ?air|flair|swoop/i,"Travel"],[/pdffiller|perspectivefilm/
  [/mcdonald|chick-fil-a|pizza|eataly|gusto|bagel|souvlaki|sushi|okonomi|poki|trattoria|tapas|shawarma|hyatt|mademoiselle|chudleigh|restaurant|burger|grill|bar &|kitchen|subway|wendy|kfc|popeyes|a&w|uber ?eats|skip/i,"Eat out"],
  [/walmart delivery|apple\.com|disney|bell media|supersim|blizzard|playstation|netflix|spotify|crave|amazon$|prime/i,"Subscriptions"],
  [/acer market|walmart|wal-mart|metro|rabba|campagna|no frills|loblaw|sobeys|food basics|freshco|costco|farm boy|longo/i,"Groceries"],
- [/shell|esso|petro|husky|ultramar|pioneer|gas/i,"Gas"],
+ [/shell|\besso\b|petro-?can|husky|ultramar|pioneer|\bgas\b/i,"Gas"],
  [/parking|park(edin|link)|indigo|impark|target park|brookfield fcp|407 etr|parking ticket|rsd -|air-serv|presto|uber(?! ?eats)|lyft/i,"Car & parking"],
  [/shoppers|pharma|rexall|hospital|clinic|dental/i,"Health"],
  [/sqsp|squarespace|adobe|uppbeat|anthropic|claude|acuity|google|canva|metricool/i,"Business"],
