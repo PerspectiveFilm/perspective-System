@@ -1963,6 +1963,7 @@ const pvLabel=mk=>{const [y,m]=mk.split("-");return MONTHS[+m-1]+" "+y};
 function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="pcc"||x.kind==="bcc")return s;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
 function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
   if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
+  {const S=pvS(),n=S.items.length;S.items=S.items.filter(x=>!((x.kind==="pcc"||x.kind==="bcc")&&(+x.amount||0)<0));if(S.items.length!==n)pvSave()}
   Y.hidden=false;L.hidden=false;Y.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===pvYear?"selected":""}>${y}</option>`).join("");
   const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0;
   for(let i=0;i<12;i++){const mk=pvMk(y,i),fut=i>last;let w=0;try{w=stats(i,y).profit}catch(e){}const e=pvMonthExp(mk),l=w-e;if(!fut){tw+=w;te+=e}
@@ -2008,7 +2009,7 @@ function pvClean(n){n=String(n||"").replace(/\\/g,"").replace(/\s+/g," ").trim()
   return n.toLowerCase().replace(/(^|[\s\-\/&(])([a-z])/g,(m,a,b)=>a+b.toUpperCase()).replace(/'S\b/g,"'s").replace(/^Mcdonald/,"McDonald")}
 function pvParseCSV(t){const out=[];String(t).split(/\r?\n/).forEach(line=>{if(!line.trim())return;const c=[];let cur="",q=false;for(const ch of line){if(ch==='"'){q=!q;continue}if(ch===","&&!q){c.push(cur);cur="";continue}cur+=ch}c.push(cur);
   const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((c[0]||"").trim());if(!m)return;const desc=(c[1]||"").trim(),deb=parseFloat(c[2])||0,cred=parseFloat(c[3])||0;
-  if(/payment - thank you|^redeem|annual fee/i.test(desc))return;const amt=Math.round((deb-cred)*100)/100;if(!amt)return;
+  if(/payment - thank you|^redeem|annual fee/i.test(desc))return;if(!deb||cred)return;const amt=Math.round(deb*100)/100;if(amt<=0)return;
   out.push({d:`${m[3]}-${m[1].padStart(2,"0")}-${m[2].padStart(2,"0")}`,raw:desc,amount:amt})});return out}
 function pvImport(k,rows){const S=pvS(),key=x=>`${x.d}|${(x.raw||x.name).toLowerCase()}|${(+x.amount).toFixed(2)}`,have={};S.items.filter(x=>x.kind===k).forEach(x=>{const q=key(x);have[q]=(have[q]||0)+1});
   const seen={};let n=0;rows.forEach(r=>{const q=key(r);seen[q]=(seen[q]||0)+1;if(seen[q]<=(have[q]||0))return;S.items.push({name:pvClean(r.raw),raw:r.raw,amount:r.amount,kind:k,d:r.d,cat:pvCat(r.raw)});n++});pvSave();renderPriv();return n}
