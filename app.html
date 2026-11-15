@@ -909,13 +909,15 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const money=n=>"$"+Math.round(n).toLocaleString("en-CA");
 const key=(i,y=state.year)=>`${y}-${String(i+1).padStart(2,"0")}`;
 const sum=(a,f=()=>true)=>a.filter(f).reduce((s,x)=>s+(+x.amount||0),0);
+function cardItems(i,y){try{const S=(state.priv&&state.priv.items)||[],mk=key(i,y);return S.filter(x=>bizIs(x)&&String(x.d||"").startsWith(mk)).sort((a,b)=>String(b.d).localeCompare(String(a.d)))}catch(e){return []}}
+function cardSum(i,y){return cardItems(i,y).reduce((s,x)=>s+(+x.amount||0),0)}
 function stats(i,y=state.year){
   const m=state.months[key(i,y)]||{clients:[],team:[],expenses:[]};
   const c=(m.clients||[]).filter(x=>x.status!=="tax"),t=m.team||[],e=m.expenses||[];
   const rate=hasGst(i,y)?GST_RATE:0;
   const gstOk=x=>rowTaxable(x);
   const gst=sum(c,gstOk)*rate;
-  const rev=sum(c)+gst,ow=x=>x.status==="unpaid"?1:x.status==="deposit"?.5:0,out=c.reduce((t,x)=>t+(+x.amount||0)*ow(x)*(1+(gstOk(x)?rate:0)),0),got=rev-out,pay=sum(t),exp=sum(e)+autoSum(i,y);
+  const rev=sum(c)+gst,ow=x=>x.status==="unpaid"?1:x.status==="deposit"?.5:0,out=c.reduce((t,x)=>t+(+x.amount||0)*ow(x)*(1+(gstOk(x)?rate:0)),0),got=rev-out,pay=sum(t),exp=sum(e)+autoSum(i,y)+cardSum(i,y);
   return{m,gst,rev,out,got,pay,exp,profit:rev-pay-exp};
 }
 
@@ -1000,10 +1002,11 @@ function board(i,host,yr=state.year){
     <div class="col">
       <div class="card"><div class="list-h"><h3 class="h-out">TEAM · PAYOUTS</h3><span class="sum">${money(sum(t))}</span></div>
         ${t.length?t.map(rowP("team")).join(""):`<div class="empty">Nobody paid this month.</div>`}${addForm("team")}</div>
-      <div class="card"><div class="list-h"><h3 class="h-out">EXPENSES</h3><span class="sum">${money(sum(e)+autoSum(i,yr))}</span></div>
-        ${e.length?e.map(rowP("expenses")).join(""):(autoExp(i,yr).length?"":`<div class="empty">No expenses logged.</div>`)}
-        ${(()=>{const A=autoExp(i,yr);return A.length||yrItems(yr).length?`<div class="c-sep ax-sep"><span>From expenses list</span><span>${money(autoSum(i,yr))}</span></div>`+(state.axOpen?A:A.slice(0,3)).map(a=>`<div class="row yr-auto ${a.off?"ax-off":""}"><span class="yn">${esc(a.name)}<small>${a.k==="mon"?"Monthly":a.k==="rec"?"Yearly":"One time"}${a.off?" · skipped this month":a.ov?" · changed this month":""}</small></span>${state.canEdit&&!a.off?`<input class="amt ax-amt" inputmode="decimal" value="${money2(a.amt)}" data-aamt="${a.j}" aria-label="${esc(a.name)} this month" title="Change for this month only">`:`<span class="amt-ro">${money(a.amt)}</span>`}${state.canEdit?`<button class="x ax-btn" data-aoff="${a.j}" title="${a.off?"Turn back on for this month":"Skip this month"}" aria-label="${a.off?"Turn back on":"Skip this month"}">${a.off?"↺":"⊘"}</button>`:"<span></span>"}</div>`).join("")+(A.length>3?`<button class="yr-more" data-axmore>${state.axOpen?"Show less":`Show all ${A.length}`}</button>`:""):""})()}
-        ${yrItems(yr).length?"":addForm("expenses")}</div>
+      <div class="card"><div class="list-h"><h3 class="h-out">EXPENSES</h3><span class="sum">${money(sum(e)+autoSum(i,yr)+cardSum(i,yr))}</span></div>
+        ${e.length?e.map(rowP("expenses")).join(""):(autoExp(i,yr).length||cardItems(i,yr).length?"":`<div class="empty">No expenses logged.</div>`)}
+        ${(()=>{const C=cardItems(i,yr);return C.length?`<div class="c-sep ax-sep"><span>From cards</span><span>${money2(cardSum(i,yr))}</span></div>`+(state.cxOpen?C:C.slice(0,5)).map(x=>`<div class="row yr-auto"><span class="yn">${esc(x.name)}<small>${yrDate(x.d)} · ${x.kind==="bcc"?"Business card":"Personal card"}</small></span><span class="amt-ro">${money2(x.amount)}</span><span></span></div>`).join("")+(C.length>5?`<button class="yr-more" data-cxmore>${state.cxOpen?"Show less":`Show all ${C.length}`}</button>`:""):""})()}
+        ${(()=>{const A=autoExp(i,yr);return A.length?`<div class="c-sep ax-sep"><span>From expenses list</span><span>${money(autoSum(i,yr))}</span></div>`+(state.axOpen?A:A.slice(0,3)).map(a=>`<div class="row yr-auto ${a.off?"ax-off":""}"><span class="yn">${esc(a.name)}<small>${a.k==="mon"?"Monthly":a.k==="rec"?"Yearly":"One time"}${a.off?" · skipped this month":a.ov?" · changed this month":""}</small></span>${state.canEdit&&!a.off?`<input class="amt ax-amt" inputmode="decimal" value="${money2(a.amt)}" data-aamt="${a.j}" aria-label="${esc(a.name)} this month" title="Change for this month only">`:`<span class="amt-ro">${money(a.amt)}</span>`}${state.canEdit?`<button class="x ax-btn" data-aoff="${a.j}" title="${a.off?"Turn back on for this month":"Skip this month"}" aria-label="${a.off?"Turn back on":"Skip this month"}">${a.off?"↺":"⊘"}</button>`:"<span></span>"}</div>`).join("")+(A.length>3?`<button class="yr-more" data-axmore>${state.axOpen?"Show less":`Show all ${A.length}`}</button>`:""):""})()}
+        ${addForm("expenses")}</div>
     </div></div>`;
   host.dataset.m=i;host.dataset.y=yr;
 }
@@ -1961,7 +1964,7 @@ const bizMore={};
 function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(state.priv&&state.priv.items)||JSON.parse(localStorage.getItem("pf-priv")||"{}").items||[]}catch(e){}
   const y=state.year,mk=key(state.sel,y),A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(!A.length){H.innerHTML="";return}
   const tot=L=>L.reduce((s,x)=>s+(+x.amount||0),0),M=A.filter(x=>String(x.d).startsWith(mk));
-  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Business expenses from cards · ${FULL[state.sel]}</h2><span class="ro-note">${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · not counted yet</span></div>
+  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Business expenses from cards · ${FULL[state.sel]}</h2><span class="ro-note">${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · counted in expenses</span></div>
   <div class="pv-catg">${BIZ_G.map((g,i)=>{const L=M.filter(x=>bizGrp(x)===i).sort((a,b)=>String(b.d).localeCompare(String(a.d))),Y=A.filter(x=>bizGrp(x)===i),sh=bizMore[i]?L:L.slice(0,5);
     return `<div class="card pv-cat"><div class="pv-cch"><h3>${g[0]}</h3><div class="pv-ccs"><span>${MONTHS[state.sel]} <b>${money2(tot(L))}</b></span><span>${y} <b>${money2(tot(Y))}</b></span></div></div>
     ${sh.map(x=>`<div class="pv-li"><span>${esc(x.name)}<small>${yrDate(x.d)} · ${x.kind==="bcc"?"Business card":"Personal card"}</small></span><b>${money2(x.amount)}</b></div>`).join("")||`<p class="ro-note" style="margin:6px 0">Nothing in ${FULL[state.sel]}</p>`}
@@ -1976,7 +1979,7 @@ const pvS=()=>{if(!state.priv||typeof state.priv!=="object")state.priv={items:[]
 function pvSave(){try{localStorage.setItem("pf-priv",JSON.stringify(pvS()))}catch(e){}}
 const pvMk=(y,i)=>`${y}-${String(i+1).padStart(2,"0")}`;
 const pvLabel=mk=>{const [y,m]=mk.split("-");return MONTHS[+m-1]+" "+y};
-function pvCardMon(mk){return pvS().items.reduce((s,x)=>s+((x.kind==="pcc"||x.kind==="bcc")&&String(x.d||"").startsWith(mk)?(+x.amount||0):0),0)}
+function pvCardMon(mk){return pvS().items.reduce((s,x)=>s+((x.kind==="pcc"||x.kind==="bcc")&&!bizIs(x)&&String(x.d||"").startsWith(mk)?(+x.amount||0):0),0)}
 function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="pcc"||x.kind==="bcc")return s;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
 function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
   if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
@@ -1995,7 +1998,7 @@ function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)
   <div class="card"><div class="pv-h"><span>Monthly home expenses</span><span>${money2(monTot)} / mo</span></div>${mon.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
   <div class="pv-h"><span>One time · ${y}</span><span>${money2(oneTot)}</span></div>${one.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
   <div class="pv-add"><input id="pv-an" placeholder="Expense (rent, car…)"><input id="pv-aa" placeholder="$0" inputmode="decimal"><select id="pv-ak"><option value="mon">Monthly</option><option value="one">One time</option></select><button class="btn" id="pv-ab" type="button">Add</button></div>
-  <p class="ro-note" style="margin-top:10px">Wage = your business profit each month (Finances). Cards = everything paid with both cards (personal + business). Only you can see this page.</p></div></div>
+  <p class="ro-note" style="margin-top:10px">Wage = your business profit each month (Finances). Cards = everything else paid with both cards. Business costs (ads, subscriptions, gas, parking, Uber) are already taken out of your Wage. Only you can see this page.</p></div></div>
   ${pvPicker(y)}<div class="pv-grid pv-cards">${pvCard("pcc","Personal Credit Card",y)}${pvCard("bcc","Business Credit Card",y)}</div>${pvCats(y)}`}
 function pvPicker(y){const has=i=>pvS().items.some(x=>(x.kind==="pcc"||x.kind==="bcc")&&String(x.d||"").startsWith(pvMk(y,i)));
   return `<div class="months pv-mp"><button aria-pressed="${pvMon<0}" data-pmon="-1">All</button>${MONTHS.map((m,i)=>`<button aria-pressed="${i===pvMon}" data-pmon="${i}" ${has(i)?"":"style=\"opacity:.45\""}>${m}</button>`).join("")}</div>`}
@@ -2263,6 +2266,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-aoff]");if
 document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||el.dataset.aamt==null||!state.canEdit)return;const h=el.closest("[data-m]");if(!h)return;const i=+h.dataset.m,y=+h.dataset.y,mk=key(i,y),v=parseAmt(el.value);
   yrMut(y,L=>{const x=L[+el.dataset.aamt];if(!x)return;const def=(x.kind||"rec")==="mon"?(+x.amount||0)/12:(+x.amount||0);x.ov={...(x.ov||{})};if(Math.abs(v-def)<0.005)delete x.ov[mk];else x.ov[mk]=v});el.blur();renderYearly()});
 document.addEventListener("click",e=>{if(!e.target.closest("[data-axmore]"))return;state.axOpen=!state.axOpen;render()});
+document.addEventListener("click",e=>{if(!e.target.closest("[data-cxmore]"))return;state.cxOpen=!state.cxOpen;render()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-tax]");if(!b||!state.canEdit)return;e.stopPropagation();const k=b.dataset.tax;saveMeta(k,clientTaxed(k)?{noTax:true,forceTax:null}:{forceTax:true,noTax:null})});
 function yrMove(j,k,beforeJ){yrMut(state.year,L=>{const it=L[j];if(!it)return;const bef=beforeJ!=null&&beforeJ!==j?L[beforeJ]:null;L.splice(j,1);if(k==="one"||k==="inv")it.kind=k;else if(it.kind==="one"||it.kind==="inv")it.kind="mon";const g=x=>x.kind==="inv"?"inv":(x.kind||"rec")==="one"?"one":"mr";let at;if(bef)at=L.indexOf(bef);else{let last=-1;L.forEach((x,i)=>{if(g(x)===k)last=i});at=last>=0?last+1:(k==="mr"?0:L.length)}L.splice(at,0,it)});renderYearly()}
 (function(){
@@ -2512,7 +2516,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&driveT){cl
     let ch=false;applying=true;try{for(const k of KEYS)if(data[k]!=null&&!(k in dirty)&&localStorage.getItem(k)!==data[k]){rawSet.call(localStorage,k,data[k]);ch=true}}finally{applying=false}
     if(!ch)return;const J=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
     loadLocal();const cm=J("pf-cmeta");if(cm)state.cmeta=cm;const pv=J("pf-pipe");if(Array.isArray(pv))state.pipe=pv;const qv=J("pf-qs");if(qv&&Array.isArray(qv.groups))state.qs=qv;
-    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;const pvd=J("pf-priv");if(pvd){state.priv=pvd;try{renderBizCards()}catch(e){}try{if(state.view==="priv"&&pvOpen)renderPriv()}catch(e){}}
+    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;const pvd=J("pf-priv");if(pvd){state.priv=pvd;try{render()}catch(e){}try{if(state.view==="priv"&&pvOpen)renderPriv()}catch(e){}}
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
