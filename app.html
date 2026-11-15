@@ -752,6 +752,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
       <div class="sec-h"><div class="months" id="month-picker"></div></div>
       <div id="fin-board"></div>
       <div class="kpis k3" id="month-kpis" style="margin-top:14px"></div>
+      <div id="biz-cards"></div>
     </section>
     <section>
       <div class="sec-h"><h2 id="yr-title">Yearly expenses</h2><span class="eyebrow" id="yr-sub"></span></div>
@@ -1952,6 +1953,20 @@ document.addEventListener("click",async e=>{
   for(const mk of Object.keys(byM)){const it0=byM[mk][0],m=clone(it0.i,it0.y);byM[mk].forEach(it=>{const x=m.clients[it.j];if(x)x.status=CASH_CLIENT.test(x.name.trim())?"cash":"paid"});await saveMonth(it0.i,m,it0.y)}
 });
 
+/* ---------- business card expenses (view only, not counted) ---------- */
+const BIZ_G=[["Ads & marketing",/facebook|facebk|meta|google ads|instagram|mr ?signs|signs|print/i],["Software & apps",/adobe|metricool|zapier|notion|chatgpt|openai|claude|anthropic|canva|uppbeat|free to use|wetransfer|pdffiller|dropbox|capcut|epidemic|artlist/i],["Website & booking",/squarespace|sqsp|acuity|domain|perspectivefilm|wix|godaddy/i],["Apple, YouTube & other",/./]];
+const bizIs=x=>(x.kind==="pcc"||x.kind==="bcc")&&((x.cat||"")==="Business"||/apple|youtube|google one|icloud/i.test((x.name||"")+" "+(x.raw||"")));
+const bizGrp=x=>{const t=(x.name||"")+" "+(x.raw||"");if(/apple|youtube|google one|icloud/i.test(t))return 3;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
+const bizMore={};
+function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(state.priv&&state.priv.items)||JSON.parse(localStorage.getItem("pf-priv")||"{}").items||[]}catch(e){}
+  const y=state.year,mk=key(state.sel,y),A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(!A.length){H.innerHTML="";return}
+  const tot=L=>L.reduce((s,x)=>s+(+x.amount||0),0),M=A.filter(x=>String(x.d).startsWith(mk));
+  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Business expenses from cards · ${FULL[state.sel]}</h2><span class="ro-note">${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · not counted yet</span></div>
+  <div class="pv-catg">${BIZ_G.map((g,i)=>{const L=M.filter(x=>bizGrp(x)===i).sort((a,b)=>String(b.d).localeCompare(String(a.d))),Y=A.filter(x=>bizGrp(x)===i),sh=bizMore[i]?L:L.slice(0,5);
+    return `<div class="card pv-cat"><div class="pv-cch"><h3>${g[0]}</h3><div class="pv-ccs"><span>${MONTHS[state.sel]} <b>${money2(tot(L))}</b></span><span>${y} <b>${money2(tot(Y))}</b></span></div></div>
+    ${sh.map(x=>`<div class="pv-li"><span>${esc(x.name)}<small>${yrDate(x.d)} · ${x.kind==="bcc"?"Business card":"Personal card"}</small></span><b>${money2(x.amount)}</b></div>`).join("")||`<p class="ro-note" style="margin:6px 0">Nothing in ${FULL[state.sel]}</p>`}
+    ${L.length>5?`<button class="btn ghost pv-more" data-bmore="${i}" type="button">${bizMore[i]?"Show less":`Show all ${L.length}`}</button>`:""}</div>`}).join("")}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-bmore]");if(!b)return;bizMore[b.dataset.bmore]=!bizMore[b.dataset.bmore];renderBizCards()});
 /* ---------- private (personal finances) ---------- */
 let pvOpen=false,pvYear=YEAR;
 const PV_H="7ab1568cd1ba1fde";
@@ -2418,7 +2433,7 @@ function render(){
     $("#home-board").innerHTML=`<div class="card empty">Opening the books…</div>`;
     $("#fin-board").innerHTML=`<div class="card empty">Opening the books…</div>`;
   }
-  renderDebtors();try{renderHomeKpis()}catch(e){console.warn(e)}try{renderYearly()}catch(e){console.warn(e)}try{renderCheck()}catch(e){console.warn(e)}try{renderInv()}catch(e){console.warn(e)}drawChart($("#chart-fin"));drawAllTime($("#chart-all"));
+  renderDebtors();try{renderHomeKpis()}catch(e){console.warn(e)}try{renderBizCards()}catch(e){console.warn(e)}try{renderYearly()}catch(e){console.warn(e)}try{renderCheck()}catch(e){console.warn(e)}try{renderInv()}catch(e){console.warn(e)}drawChart($("#chart-fin"));drawAllTime($("#chart-all"));
   // home: current month
   const hs=stats(curIdx,YEAR);
   $("#home-month-title").textContent=FULL[curIdx];
@@ -2497,7 +2512,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&driveT){cl
     let ch=false;applying=true;try{for(const k of KEYS)if(data[k]!=null&&!(k in dirty)&&localStorage.getItem(k)!==data[k]){rawSet.call(localStorage,k,data[k]);ch=true}}finally{applying=false}
     if(!ch)return;const J=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
     loadLocal();const cm=J("pf-cmeta");if(cm)state.cmeta=cm;const pv=J("pf-pipe");if(Array.isArray(pv))state.pipe=pv;const qv=J("pf-qs");if(qv&&Array.isArray(qv.groups))state.qs=qv;
-    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;const pvd=J("pf-priv");if(pvd){state.priv=pvd;try{if(state.view==="priv"&&pvOpen)renderPriv()}catch(e){}}
+    const zv=J("pf-leads");if(Array.isArray(zv))state.leads=zv;const sv=J("pf-sys");if(Array.isArray(sv))state.sys=sv;const lv=J("pf-learn");if(Array.isArray(lv))state.learn=lv;const lk=J("pf-links");if(Array.isArray(lk))state.links=lk;const ck=J("pf-check");if(ck)state.check=ck;const yv=J("pf-yearly");if(yv)state.yearly=yv;const iv=J("pf-inv");if(iv)state.inv=iv;const pvd=J("pf-priv");if(pvd){state.priv=pvd;try{renderBizCards()}catch(e){}try{if(state.view==="priv"&&pvOpen)renderPriv()}catch(e){}}
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
