@@ -640,7 +640,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf .pv-row .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:0}#pf .pv-row .x:hover{color:var(--unpaid)}
 #pf .pv-h{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 4px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 #pf .pv-h:first-child{margin-top:0}
-#pf .pv-add{display:grid;grid-template-columns:minmax(0,1fr) 90px 104px auto;gap:8px;margin-top:14px}
+#pf .pv-add{display:grid;grid-template-columns:minmax(0,1fr) 90px 128px auto;gap:8px;margin-top:14px}
 #pf .pv-add input,#pf .pv-add select{background:var(--soft);border:1px solid var(--line);border-radius:10px;color:var(--ink);font:inherit;font-size:13px;padding:8px 10px;min-width:0}
 @media (max-width:520px){#pf .pv-add{grid-template-columns:1fr 1fr}#pf .pv-add input#pv-an{grid-column:1/-1}}
 </style>
@@ -1951,21 +1951,23 @@ function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)
   const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0;
   for(let i=0;i<12;i++){const mk=pvMk(y,i),fut=i>last;let w=0;try{w=stats(i,y).profit}catch(e){}const e=pvMonthExp(mk),l=w-e;if(!fut){tw+=w;te+=e}
     rows.push(`<tr class="${fut?"fut":""}${y===now.getFullYear()&&i===now.getMonth()?" cur":""}"><td>${FULL[i]}</td><td class="w">${money(w)}</td><td class="e">${e?money(e):"—"}</td><td class="l${l<0?" neg":""}">${money(l)}</td></tr>`)}
-  const S=pvS(),mon=S.items.map((x,j)=>[x,j]).filter(([x])=>x.kind!=="one"),one=S.items.map((x,j)=>[x,j]).filter(([x])=>x.kind==="one"&&(x.m||"").startsWith(y+"-"));
+  const S=pvS(),grpK=k=>S.items.map((x,j)=>[x,j]).filter(([x])=>(x.kind||"mon")===k),mon=grpK("mon"),pcc=grpK("pcc"),bcc=grpK("bcc"),one=S.items.map((x,j)=>[x,j]).filter(([x])=>x.kind==="one"&&(x.m||"").startsWith(y+"-"));
   const mopts=sel=>{let o="";for(let yy=YEARS[YEARS.length-1]+1;yy>=YEARS[0];yy--)for(let i=11;i>=0;i--){const k=pvMk(yy,i);o+=`<option value="${k}" ${k===sel?"selected":""}>${pvLabel(k)}</option>`}return o};
-  const row=([x,j])=>`<div class="pv-row" data-pj="${j}"><span><input data-pf="name" value="${esc(x.name)}" aria-label="Name"><small>${x.kind==="one"?`One time · <select data-pf="m">${mopts(x.m)}</select>`:`Monthly from <select data-pf="from">${mopts(x.from)}</select>`}</small></span><input class="a" data-pf="amount" inputmode="decimal" value="${(+x.amount||0).toFixed(2)}" aria-label="Amount"><button class="x" data-pdel title="Remove" aria-label="Remove">×</button></div>`;
-  const monTot=mon.reduce((s,[x])=>s+(+x.amount||0),0),oneTot=one.reduce((s,[x])=>s+(+x.amount||0),0);
+  const row=([x,j])=>`<div class="pv-row" data-pj="${j}"><span><input data-pf="name" value="${esc(x.name)}" aria-label="Name"><small>${x.kind==="one"?`One time · <select data-pf="m">${mopts(x.m)}</select>`:`${x.kind==="pcc"?"Personal card · monthly":x.kind==="bcc"?"Business card · monthly":"Monthly"} from <select data-pf="from">${mopts(x.from)}</select>`}</small></span><input class="a" data-pf="amount" inputmode="decimal" value="${(+x.amount||0).toFixed(2)}" aria-label="Amount"><button class="x" data-pdel title="Remove" aria-label="Remove">×</button></div>`;
+  const sum=A=>A.reduce((s,[x])=>s+(+x.amount||0),0),monTot=sum(mon),oneTot=one.reduce((s,[x])=>s+(+x.amount||0),0);
   B.innerHTML=`<div class="kpis k3">${kpi("Wage "+y,money(tw),"good")}${kpi("Home expenses "+y,money(te),"bad")}${kpi("Left "+y,money(tw-te),tw-te<0?"bad":"acc")}</div>
   <div class="pv-grid"><div class="card scroll"><table class="yt pv-t"><tr><th>Month</th><th>Wage</th><th>Home exp.</th><th>Left</th></tr>${rows.join("")}<tr class="tot"><td>Total</td><td class="w">${money(tw)}</td><td class="e">${money(te)}</td><td class="l${tw-te<0?" neg":""}">${money(tw-te)}</td></tr></table></div>
   <div class="card"><div class="pv-h"><span>Monthly home expenses</span><span>${money2(monTot)} / mo</span></div>${mon.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
+  <div class="pv-h"><span>Personal Credit Card</span><span>${money2(sum(pcc))} / mo</span></div>${pcc.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
+  <div class="pv-h"><span>Business Credit Card</span><span>${money2(sum(bcc))} / mo</span></div>${bcc.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
   <div class="pv-h"><span>One time · ${y}</span><span>${money2(oneTot)}</span></div>${one.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
-  <div class="pv-add"><input id="pv-an" placeholder="Expense (rent, car…)"><input id="pv-aa" placeholder="$0" inputmode="decimal"><select id="pv-ak"><option value="mon">Monthly</option><option value="one">One time</option></select><button class="btn" id="pv-ab" type="button">Add</button></div>
+  <div class="pv-add"><input id="pv-an" placeholder="Expense (rent, car…)"><input id="pv-aa" placeholder="$0" inputmode="decimal"><select id="pv-ak"><option value="mon">Monthly</option><option value="pcc">Personal card</option><option value="bcc">Business card</option><option value="one">One time</option></select><button class="btn" id="pv-ab" type="button">Add</button></div>
   <p class="ro-note" style="margin-top:10px">Wage = your business profit each month (Finances). Only you can see this page.</p></div></div>`}
 document.addEventListener("input",async e=>{if(e.target.id!=="pv-pin")return;const el=e.target;el.value=el.value.replace(/\D/g,"").slice(0,4);el.classList.remove("bad");if(el.value.length===4){if(await pvHash(el.value)===PV_H){pvOpen=true;renderPriv()}else{el.classList.add("bad");setTimeout(()=>{el.value=""},300)}}});
 document.addEventListener("change",e=>{const t=e.target;if(t.id==="pv-yr"){pvYear=+t.value;renderPriv();return}const r=t.closest&&t.closest(".pv-row");if(!r||!pvOpen)return;const x=pvS().items[+r.dataset.pj];if(!x)return;const f=t.dataset.pf;if(f==="amount")x.amount=Math.round((parseFloat(String(t.value).replace(/[^0-9.\-]/g,""))||0)*100)/100;else if(f)x[f]=t.value;pvSave();renderPriv()});
 document.addEventListener("click",e=>{const t=e.target;if(t.closest("#pv-lock")){pvOpen=false;renderPriv();return}if(!pvOpen)return;
   if(t.closest("[data-pdel]")){const r=t.closest(".pv-row");pvS().items.splice(+r.dataset.pj,1);pvSave();renderPriv();return}
-  if(t.closest("#pv-ab")){const n=$("#pv-an").value.trim(),a=Math.round((parseFloat($("#pv-aa").value.replace(/[^0-9.\-]/g,""))||0)*100)/100,k=$("#pv-ak").value;if(!n)return;const mk=pvMk(now.getFullYear(),now.getMonth());pvS().items.push(k==="one"?{name:n,amount:a,kind:"one",m:mk}:{name:n,amount:a,kind:"mon",from:mk});pvSave();renderPriv()}});
+  if(t.closest("#pv-ab")){const n=$("#pv-an").value.trim(),a=Math.round((parseFloat($("#pv-aa").value.replace(/[^0-9.\-]/g,""))||0)*100)/100,k=$("#pv-ak").value;if(!n)return;const mk=pvMk(now.getFullYear(),now.getMonth());pvS().items.push(k==="one"?{name:n,amount:a,kind:"one",m:mk}:{name:n,amount:a,kind:k,from:mk});pvSave();renderPriv()}});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.target.id==="pv-an"||e.target.id==="pv-aa")){e.preventDefault();$("#pv-ab").click()}});
 /* ---------- undo / redo ---------- */
 (function(){
