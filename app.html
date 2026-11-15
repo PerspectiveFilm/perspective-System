@@ -655,6 +655,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf .sub-ic img{width:22px;height:22px;object-fit:contain}
 #pf .sub-n{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pf .sub-p{font-size:14px;font-weight:600;white-space:nowrap}#pf .sub-p small{font-weight:400;color:var(--muted);font-size:11px;margin-left:3px}
+#pf .sub-x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:0 0 0 4px}#pf .sub-x:hover{color:var(--unpaid)}
 /* private */
 #pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
 #pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
@@ -2040,9 +2041,11 @@ function subsList(S){const now0=new Date(),dd=x=>new Date(x.d+"T12:00:00"),G={},
     const price=yearly?la:A.filter(x=>(lastD-dd(x))/864e5<28).reduce((s,x)=>s+(+x.amount||0),0);
     out.push({n,price,monthly:!yearly,last:A[0].d,card:A[0].kind})});
   return out.sort((a,b)=>(b.monthly?b.price:b.price/12)-(a.monthly?a.price:a.price/12))}
-function subsHtml(S){const L=subsList(S);if(!L.length)return "";const mo=L.reduce((s,x)=>s+(x.monthly?x.price:x.price/12),0);
+function subsSave(){try{localStorage.setItem("pf-priv",JSON.stringify(state.priv))}catch(e){}}
+function subsHtml(S){const P=state.priv||{};if(P&&!P.subInit&&state.priv){P.subHide=[...new Set([...(P.subHide||[]),"ChatGPT","Domain"])];P.subInit=1;subsSave()}const HID=(P.subHide||[]),L=subsList(S).filter(x=>!HID.includes(x.n));if(!L.length)return "";const mo=L.reduce((s,x)=>s+(x.monthly?x.price:x.price/12),0);
   return `<div class="sec-h" style="margin-top:22px"><h2 style="font-size:18px">Active subscriptions · ${L.length}</h2><span class="ro-note">about ${money2(mo)} / month · ${money2(mo*12)} / year</span></div>
-  <div class="subs">${L.map(x=>{const dom=SUB_DOM[x.n];return `<div class="sub" title="Last charged ${yrDate(x.last)} · ${x.card==="bcc"?"Business":"Personal"} card"><span class="sub-ic">${dom?`<img src="https://www.google.com/s2/favicons?domain=${dom}&sz=64" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(x.n[0])}'))">`:esc(x.n[0])}</span><span class="sub-n">${esc(x.n)}</span><span class="sub-p">${money2(x.price)}<small>${x.monthly?"/ mo":"/ yr"}</small></span></div>`}).join("")}</div>`}
+  <div class="subs">${L.map(x=>{const dom=SUB_DOM[x.n];return `<div class="sub" title="Last charged ${yrDate(x.last)} · ${x.card==="bcc"?"Business":"Personal"} card"><span class="sub-ic">${dom?`<img src="https://www.google.com/s2/favicons?domain=${dom}&sz=64" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(x.n[0])}'))">`:esc(x.n[0])}</span><span class="sub-n">${esc(x.n)}</span><span class="sub-p">${money2(x.price)}<small>${x.monthly?"/ mo":"/ yr"}</small></span>${state.canEdit?`<button class="x sub-x" data-subhide="${esc(x.n)}" aria-label="Remove ${esc(x.n)}" title="Remove — I don't have this">×</button>`:""}</div>`}).join("")}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-subhide]");if(!b||!state.priv)return;state.priv.subHide=[...new Set([...(state.priv.subHide||[]),b.dataset.subhide])];subsSave();renderBizCards()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-bmore]");if(!b)return;bizMore[b.dataset.bmore]=!bizMore[b.dataset.bmore];renderBizCards()});
 /* ---------- ask twice before removing anything ---------- */
 (function(){const SEL='[data-ckdel],[data-ckrm],[data-cxoff],[data-hpdel],[data-idel],[data-ldel],[data-ldelsec],[data-lkdel],[data-lkdelg],[data-pdel],[data-qdel],[data-qdelg],[data-sdel],[data-sdelc],[data-sdelg],[data-sdelsec],[data-ydel],[data-zdel],[data-zdelsec],[data-act="del"],button[aria-label^="Remove"],button[aria-label^="Delete"],button[title^="Remove"],button[title^="Delete"]';
