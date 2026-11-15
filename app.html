@@ -1987,13 +1987,14 @@ function debtors(){
   }
   const R=Object.values(g).sort((a,b)=>(b.total-a.total)||(b.later-a.later));R.later=later;return R;
 }
+document.addEventListener("click",e=>{if(!e.target.closest("[data-dmore]"))return;state.dMore=!state.dMore;renderDebtors()});
 function renderDebtors(){
   const host=$("#debt-list");if(!host)return;
   const D=debtors(),tot=D.reduce((s,d)=>s+d.total,0),nk=nowKey(),nOwe=D.filter(d=>d.total>0).length;
   $("#debt-sub").textContent=nOwe?`${nOwe} client${nOwe>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
   if(!state.loaded){host.innerHTML=`<div class="d-empty">Loading…</div>`;return}
-  host.innerHTML=D.length?D.map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.nd?"nd":"old"}" ${it.nd?`title="Not due yet"`:""}>${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
-      <div class="d-a ${d.total?"":"nd"}">${d.total?money(d.total):money(d.later)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
+  host.innerHTML=D.length?(state.dMore?D:D.slice(0,5)).map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.nd?"nd":"old"}" ${it.nd?`title="Not due yet"`:""}>${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
+      <div class="d-a ${d.total?"":"nd"}">${d.total?money(d.total):money(d.later)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+(D.length>5?`<button class="yr-more" data-dmore>${state.dMore?"Show less":`See all ${D.length}`}</button>`:"")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
     :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"");
 }
 document.addEventListener("click",async e=>{
