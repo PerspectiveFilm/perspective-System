@@ -1960,24 +1960,25 @@ const pvS=()=>{if(!state.priv||typeof state.priv!=="object")state.priv={items:[]
 function pvSave(){try{localStorage.setItem("pf-priv",JSON.stringify(pvS()))}catch(e){}}
 const pvMk=(y,i)=>`${y}-${String(i+1).padStart(2,"0")}`;
 const pvLabel=mk=>{const [y,m]=mk.split("-");return MONTHS[+m-1]+" "+y};
+function pvCardMon(mk){return pvS().items.reduce((s,x)=>s+(x.kind==="pcc"&&(x.cat||"")!=="Business"&&String(x.d||"").startsWith(mk)?(+x.amount||0):0),0)}
 function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="pcc"||x.kind==="bcc")return s;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
 function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
   if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
   pvFixNeg();
   Y.hidden=false;L.hidden=false;Y.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===pvYear?"selected":""}>${y}</option>`).join("");
-  const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0;
-  for(let i=0;i<12;i++){const mk=pvMk(y,i),fut=i>last;let w=0;try{w=stats(i,y).profit}catch(e){}const e=pvMonthExp(mk),l=w-e;if(!fut){tw+=w;te+=e}
-    rows.push(`<tr class="${fut?"fut":""}${y===now.getFullYear()&&i===now.getMonth()?" cur":""}"><td>${FULL[i]}</td><td class="w">${money(w)}</td><td class="e">${e?money(e):"—"}</td><td class="l${l<0?" neg":""}">${money(l)}</td></tr>`)}
+  const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0,tc=0;
+  for(let i=0;i<12;i++){const mk=pvMk(y,i),fut=i>last;let w=0;try{w=stats(i,y).profit}catch(e){}const e=pvMonthExp(mk),c=pvCardMon(mk),l=w-e-c;if(!fut){tw+=w;te+=e;tc+=c}
+    rows.push(`<tr class="${fut?"fut":""}${y===now.getFullYear()&&i===now.getMonth()?" cur":""}"><td>${FULL[i]}</td><td class="w">${money(w)}</td><td class="e">${e?money(e):"—"}</td><td class="e">${c?money(c):"—"}</td><td class="l${l<0?" neg":""}">${money(l)}</td></tr>`)}
   const S=pvS(),grpK=k=>S.items.map((x,j)=>[x,j]).filter(([x])=>(x.kind||"mon")===k),mon=grpK("mon"),pcc=grpK("pcc"),bcc=grpK("bcc"),one=S.items.map((x,j)=>[x,j]).filter(([x])=>x.kind==="one"&&(x.m||"").startsWith(y+"-"));
   const mopts=sel=>{let o="";for(let yy=YEARS[YEARS.length-1]+1;yy>=YEARS[0];yy--)for(let i=11;i>=0;i--){const k=pvMk(yy,i);o+=`<option value="${k}" ${k===sel?"selected":""}>${pvLabel(k)}</option>`}return o};
   const row=([x,j])=>`<div class="pv-row" data-pj="${j}"><span><input data-pf="name" value="${esc(x.name)}" aria-label="Name"><small>${x.kind==="one"?`One time · <select data-pf="m">${mopts(x.m)}</select>`:`Monthly from <select data-pf="from">${mopts(x.from)}</select>`}</small></span><input class="a" data-pf="amount" inputmode="decimal" value="${(+x.amount||0).toFixed(2)}" aria-label="Amount"><button class="x" data-pdel title="Remove" aria-label="Remove">×</button></div>`;
   const sum=A=>A.reduce((s,[x])=>s+(+x.amount||0),0),monTot=sum(mon),oneTot=one.reduce((s,[x])=>s+(+x.amount||0),0);
-  B.innerHTML=`<div class="kpis k3">${kpi("Wage "+y,money(tw),"good")}${kpi("Home expenses "+y,money(te),"bad")}${kpi("Left "+y,money(tw-te),tw-te<0?"bad":"acc")}</div>
-  <div class="pv-grid"><div class="card scroll"><table class="yt pv-t"><tr><th>Month</th><th>Wage</th><th>Home exp.</th><th>Left</th></tr>${rows.join("")}<tr class="tot"><td>Total</td><td class="w">${money(tw)}</td><td class="e">${money(te)}</td><td class="l${tw-te<0?" neg":""}">${money(tw-te)}</td></tr></table></div>
+  B.innerHTML=`<div class="kpis k3">${kpi("Wage "+y,money(tw),"good")}${kpi("Expenses "+y,money(te+tc),"bad")}${kpi("Left "+y,money(tw-te-tc),tw-te-tc<0?"bad":"acc")}</div>
+  <div class="pv-grid"><div class="card scroll"><table class="yt pv-t"><tr><th>Month</th><th>Wage</th><th>Home exp.</th><th>Card</th><th>Left</th></tr>${rows.join("")}<tr class="tot"><td>Total</td><td class="w">${money(tw)}</td><td class="e">${money(te)}</td><td class="e">${money(tc)}</td><td class="l${tw-te-tc<0?" neg":""}">${money(tw-te-tc)}</td></tr></table></div>
   <div class="card"><div class="pv-h"><span>Monthly home expenses</span><span>${money2(monTot)} / mo</span></div>${mon.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
   <div class="pv-h"><span>One time · ${y}</span><span>${money2(oneTot)}</span></div>${one.map(row).join("")||`<p class="ro-note" style="margin:6px 0">None yet</p>`}
   <div class="pv-add"><input id="pv-an" placeholder="Expense (rent, car…)"><input id="pv-aa" placeholder="$0" inputmode="decimal"><select id="pv-ak"><option value="mon">Monthly</option><option value="one">One time</option></select><button class="btn" id="pv-ab" type="button">Add</button></div>
-  <p class="ro-note" style="margin-top:10px">Wage = your business profit each month (Finances). Only you can see this page.</p></div></div>
+  <p class="ro-note" style="margin-top:10px">Wage = your business profit each month (Finances). Card = personal card purchases (Business category not counted). Only you can see this page.</p></div></div>
   ${pvPicker(y)}<div class="pv-grid pv-cards">${pvCard("pcc","Personal Credit Card",y)}${pvCard("bcc","Business Credit Card",y)}</div>${pvCats(y)}`}
 function pvPicker(y){const has=i=>pvS().items.some(x=>(x.kind==="pcc"||x.kind==="bcc")&&String(x.d||"").startsWith(pvMk(y,i)));
   return `<div class="months pv-mp"><button aria-pressed="${pvMon<0}" data-pmon="-1">All</button>${MONTHS.map((m,i)=>`<button aria-pressed="${i===pvMon}" data-pmon="${i}" ${has(i)?"":"style=\"opacity:.45\""}>${m}</button>`).join("")}</div>`}
