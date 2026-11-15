@@ -648,6 +648,13 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf .biz-d{display:grid;gap:5px;padding:2px 0 10px;font-size:12px}#pf .biz-d div{display:flex;justify-content:space-between;gap:10px}#pf .biz-d span{color:var(--muted)}#pf .biz-d b{font-weight:500;text-align:right;overflow-wrap:anywhere}
 @media (min-width:1000px){#pf{zoom:1.1}}
 #pf .pf-arm{background:var(--unpaid)!important;color:#fff!important;border-color:var(--unpaid)!important;border-radius:999px!important;padding:2px 8px!important;width:auto!important;min-width:0!important;font-size:11px!important;font-weight:600!important;white-space:nowrap!important;opacity:1!important;line-height:1.4!important}
+#pf .subs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:980px){#pf .subs{grid-template-columns:repeat(3,minmax(0,1fr))}}@media (max-width:700px){#pf .subs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#pf .sub{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+#pf .sub-ic{width:32px;height:32px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;color:#111;font-weight:700;font-size:14px}
+#pf .sub-ic img{width:22px;height:22px;object-fit:contain}
+#pf .sub-n{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pf .sub-p{font-size:14px;font-weight:600;white-space:nowrap}#pf .sub-p small{font-weight:400;color:var(--muted);font-size:11px;margin-left:3px}
 /* private */
 #pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
 #pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
@@ -2020,11 +2027,22 @@ const bizMore={};
 function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(state.priv&&state.priv.items)||JSON.parse(localStorage.getItem("pf-priv")||"{}").items||[]}catch(e){}
   const y=state.year,mk=key(state.sel,y),A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(!A.length){H.innerHTML="";return}
   const tot=L=>L.reduce((s,x)=>s+(+x.amount||0),0),M=A.filter(x=>String(x.d).startsWith(mk));
-  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Business expenses from cards · ${FULL[state.sel]}</h2><span class="ro-note">${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · counted in expenses</span></div>
+  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Credit Card Expenses · ${FULL[state.sel]}</h2><span class="ro-note">${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · counted in expenses</span></div>
   <div class="pv-catg">${BIZ_G.map((g,i)=>{const L=M.filter(x=>bizGrp(x)===i).sort((a,b)=>String(b.d).localeCompare(String(a.d))),Y=A.filter(x=>bizGrp(x)===i),sh=bizMore[i]?L:L.slice(0,5);
     return `<div class="card pv-cat"><div class="pv-cch"><h3>${g[0]}</h3><div class="pv-ccs"><span>${MONTHS[state.sel]} <b>${money2(tot(L))}</b></span><span>${y} <b>${money2(tot(Y))}</b></span></div></div>
     ${sh.map(x=>bizRow(x,S)).join("")||`<p class="ro-note" style="margin:6px 0">Nothing in ${FULL[state.sel]}</p>`}
-    ${L.length>5?`<button class="btn ghost pv-more" data-bmore="${i}" type="button">${bizMore[i]?"Show less":`Show all ${L.length}`}</button>`:""}</div>`}).join("")}</div>`}
+    ${L.length>5?`<button class="btn ghost pv-more" data-bmore="${i}" type="button">${bizMore[i]?"Show less":`Show all ${L.length}`}</button>`:""}</div>`}).join("")}</div>`+subsHtml(S)}
+const SUB_DOM={"Amazon Prime":"amazon.ca","Squarespace":"squarespace.com","Acuity":"acuityscheduling.com","Domain":"squarespace.com","Apple":"apple.com","YouTube":"youtube.com","Google One":"one.google.com","ChatGPT":"openai.com","Claude":"claude.ai","Adobe":"adobe.com","Metricool":"metricool.com","Uppbeat":"uppbeat.io","Zapier":"zapier.com","Notion":"notion.so","WeTransfer":"wetransfer.com","Free To Use":"freetouse.com","Canva":"canva.com","Netflix":"netflix.com"};
+function subsList(S){const now0=new Date(),dd=x=>new Date(x.d+"T12:00:00"),G={},YR=/^(Squarespace|Canva|Domain)$/;
+  S.filter(x=>bizIs(x)&&bizGrp(x)===1&&(+x.amount||0)>0&&!/youtube videos/i.test(x.raw||"")).forEach(x=>{const n=bizName(x);(G[n]=G[n]||[]).push(x)});
+  const out=[];Object.entries(G).forEach(([n,A])=>{A.sort((a,b)=>String(b.d).localeCompare(String(a.d)));const lastD=dd(A[0]),age=(now0-lastD)/864e5,la=+A[0].amount||0,prev=A[1]?(+A[1].amount||0):0;
+    const yearly=YR.test(n)||(prev&&la>=3*prev);if(yearly?age>380:age>45)return;
+    const price=yearly?la:A.filter(x=>(lastD-dd(x))/864e5<28).reduce((s,x)=>s+(+x.amount||0),0);
+    out.push({n,price,monthly:!yearly,last:A[0].d,card:A[0].kind})});
+  return out.sort((a,b)=>(b.monthly?b.price:b.price/12)-(a.monthly?a.price:a.price/12))}
+function subsHtml(S){const L=subsList(S);if(!L.length)return "";const mo=L.reduce((s,x)=>s+(x.monthly?x.price:x.price/12),0);
+  return `<div class="sec-h" style="margin-top:22px"><h2 style="font-size:18px">Active subscriptions · ${L.length}</h2><span class="ro-note">about ${money2(mo)} / month · ${money2(mo*12)} / year</span></div>
+  <div class="subs">${L.map(x=>{const dom=SUB_DOM[x.n];return `<div class="sub" title="Last charged ${yrDate(x.last)} · ${x.card==="bcc"?"Business":"Personal"} card"><span class="sub-ic">${dom?`<img src="https://www.google.com/s2/favicons?domain=${dom}&sz=64" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(x.n[0])}'))">`:esc(x.n[0])}</span><span class="sub-n">${esc(x.n)}</span><span class="sub-p">${money2(x.price)}<small>${x.monthly?"/ mo":"/ yr"}</small></span></div>`}).join("")}</div>`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-bmore]");if(!b)return;bizMore[b.dataset.bmore]=!bizMore[b.dataset.bmore];renderBizCards()});
 /* ---------- ask twice before removing anything ---------- */
 (function(){const SEL='[data-ckdel],[data-ckrm],[data-cxoff],[data-hpdel],[data-idel],[data-ldel],[data-ldelsec],[data-lkdel],[data-lkdelg],[data-pdel],[data-qdel],[data-qdelg],[data-sdel],[data-sdelc],[data-sdelg],[data-sdelsec],[data-ydel],[data-zdel],[data-zdelsec],[data-act="del"],button[aria-label^="Remove"],button[aria-label^="Delete"],button[title^="Remove"],button[title^="Delete"]';
