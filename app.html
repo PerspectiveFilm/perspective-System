@@ -1964,7 +1964,7 @@ function pvCardMon(mk){return pvS().items.reduce((s,x)=>s+(x.kind==="pcc"&&(x.ca
 function pvMonthExp(mk){return pvS().items.reduce((s,x)=>{const a=+x.amount||0;if(x.kind==="pcc"||x.kind==="bcc")return s;if(x.kind==="one")return s+(x.m===mk?a:0);return s+((x.from||"0000-00")<=mk&&(!x.to||x.to>=mk)?a:0)},0)}
 function renderPriv(){const B=$("#pv-body"),Y=$("#pv-yr"),L=$("#pv-lock");if(!B)return;
   if(!pvOpen){Y.hidden=true;L.hidden=true;B.innerHTML=`<div class="card pv-gate"><h3>Private</h3><p>Enter your PIN</p><input class="pv-pin" id="pv-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN"></div>`;setTimeout(()=>{const i=$("#pv-pin");if(i)i.focus()},50);return}
-  pvFixNeg();
+  pvFixNeg();{const S=pvS();if(!S.fromFix){S.items.forEach(x=>{if((x.kind||"mon")==="mon"&&x.from==="2026-11")x.from="2026-01"});S.fromFix=1;pvSave()}}
   Y.hidden=false;L.hidden=false;Y.innerHTML=YEARS.map(y=>`<option value="${y}" ${y===pvYear?"selected":""}>${y}</option>`).join("");
   const y=pvYear,last=y<now.getFullYear()?11:y>now.getFullYear()?-1:now.getMonth(),rows=[];let tw=0,te=0,tc=0;
   for(let i=0;i<12;i++){const mk=pvMk(y,i),fut=i>last;let w=0;try{w=stats(i,y).profit}catch(e){}const e=pvMonthExp(mk),c=pvCardMon(mk),l=w-e-c;if(!fut){tw+=w;te+=e;tc+=c}
@@ -2037,7 +2037,7 @@ document.addEventListener("click",e=>{const t=e.target;if(t.closest("#pv-lock"))
   if(t.closest("[data-pmore]")){const k=t.closest("[data-pmore]").dataset.pmore;pvMore[k]=!pvMore[k];renderPriv();return}
   if(t.closest("[data-pcadd]")){const f=t.closest(".pv-cadd"),n=f.querySelector(".n").value.trim(),a=Math.round((parseFloat(f.querySelector(".a").value.replace(/[^0-9.\-]/g,""))||0)*100)/100,d=f.querySelector(".d").value||new Date().toLocaleDateString("en-CA");if(!n)return;pvS().items.push({name:n,amount:a,kind:f.dataset.pk,d});pvSave();renderPriv();return}
   if(t.closest("[data-pdel]")){const r=t.closest(".pv-row");pvS().items.splice(+r.dataset.pj,1);pvSave();renderPriv();return}
-  if(t.closest("#pv-ab")){const n=$("#pv-an").value.trim(),a=Math.round((parseFloat($("#pv-aa").value.replace(/[^0-9.\-]/g,""))||0)*100)/100,k=$("#pv-ak").value;if(!n)return;const mk=pvMk(now.getFullYear(),now.getMonth());pvS().items.push(k==="one"?{name:n,amount:a,kind:"one",m:mk}:{name:n,amount:a,kind:k,from:mk});pvSave();renderPriv()}});
+  if(t.closest("#pv-ab")){const n=$("#pv-an").value.trim(),a=Math.round((parseFloat($("#pv-aa").value.replace(/[^0-9.\-]/g,""))||0)*100)/100,k=$("#pv-ak").value;if(!n)return;const mk=pvMk(now.getFullYear(),now.getMonth());pvS().items.push(k==="one"?{name:n,amount:a,kind:"one",m:mk}:{name:n,amount:a,kind:k,from:pvMk(pvYear,0)});pvSave();renderPriv()}});
 document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="pv-an"||e.target.id==="pv-aa"){e.preventDefault();$("#pv-ab").click();return}const f=e.target.closest&&e.target.closest(".pv-cadd");if(f){e.preventDefault();f.querySelector("[data-pcadd]").click()}});
 /* ---------- undo / redo ---------- */
 (function(){
