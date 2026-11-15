@@ -1954,9 +1954,9 @@ document.addEventListener("click",async e=>{
 });
 
 /* ---------- business card expenses (view only, not counted) ---------- */
-const BIZ_G=[["Ads & marketing",/facebook|facebk|meta|google ads|instagram|mr ?signs|signs|print/i],["Software & apps",/adobe|metricool|zapier|notion|chatgpt|openai|claude|anthropic|canva|uppbeat|free to use|wetransfer|pdffiller|dropbox|capcut|epidemic|artlist/i],["Car, gas & parking",/uber(?! ?eats)|lyft|shell|esso|petro|husky|ultramar|pioneer|parking|park(edin|link)|indigo|impark|407|green p|air-serv/i],["Website, Apple & other",/./]];
+const BIZ_G=[["Ads",/facebook|facebk|meta|google ads|instagram|mr ?signs|signs|print/i],["Subscriptions",/adobe|metricool|zapier|notion|chatgpt|openai|claude|anthropic|canva|uppbeat|free to use|wetransfer|pdffiller|dropbox|capcut|epidemic|artlist|squarespace|sqsp|acuity|domain|wix|godaddy|apple|youtube|google one|icloud|netflix|google/i],["Car, gas & parking",/uber(?! ?eats)|lyft|shell|esso|petro|husky|ultramar|pioneer|parking|park(edin|link)|indigo|impark|407|green p|air-serv/i],["Other",/./]];
 const bizIs=x=>(x.kind==="pcc"||x.kind==="bcc")&&(["Business","Gas","Car & parking"].includes(x.cat||"")||/apple|youtube|google one|icloud|uber(?! ?eats)/i.test((x.name||"")+" "+(x.raw||"")));
-const bizGrp=x=>{const t=(x.name||"")+" "+(x.raw||"");if(/apple|youtube|google one|icloud/i.test(t))return 3;if(x.cat==="Gas"||x.cat==="Car & parking")return 2;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
+const bizGrp=x=>{const t=(x.name||"")+" "+(x.raw||"");if(/apple|youtube|google one|icloud/i.test(t))return 1;if(x.cat==="Gas"||x.cat==="Car & parking")return 2;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
 const bizMore={};
 function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(state.priv&&state.priv.items)||JSON.parse(localStorage.getItem("pf-priv")||"{}").items||[]}catch(e){}
   const y=state.year,mk=key(state.sel,y),A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(!A.length){H.innerHTML="";return}
