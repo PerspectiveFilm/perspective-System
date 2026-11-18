@@ -676,6 +676,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf .cd-logo{display:flex;align-items:center;gap:12px;margin:4px 0 12px;font-size:13px;color:var(--muted)}#pf .cd-logo .btn{padding:5px 10px;font-size:12px}
 #pf .sd.nd{background:var(--ink);opacity:.85}
 #pf .now-c[draggable=true]{cursor:grab}#pf .now-c.now-drag{opacity:.4}#pf .now-c.now-over{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+#pf .kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr)) !important}@media (max-width:900px){#pf .kpis.k5{grid-template-columns:repeat(2,minmax(0,1fr)) !important}#pf .kpis.k5>:last-child{grid-column:1/-1}}
 /* private */
 #pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
 #pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
@@ -1371,7 +1372,7 @@ function renderClients(){
   const tot=Object.values(bc).reduce((a,b)=>a+b.paid,0)||1,crows=Object.entries(bc).sort((a,b)=>b[1].paid-a[1].paid);
   $("#cty-list").innerHTML=crows.map(([k,b])=>`<button class="irow ${state.ccty===k?"on":""}" data-ccty="${k}"><span class="in">${CN[k]||k}</span><span class="ibar"><i style="width:${(b.paid/tot*100).toFixed(1)}%;background:var(--accent)"></i></span><span class="iv">${money(b.paid)} <span style="color:var(--muted);font-size:12px">${Math.round(b.paid/tot*100)}%</span><small>${b.n} clients · ${mLabel(b.first)} – ${mLabel(b.last)}${b.act?` · ${b.act} active · ${money(b.mrr)}/mo`:""}</small></span></button>`).join("");
   $("#cty-clear").hidden=!state.ccty;
-  $("#client-kpis").innerHTML=kpi("Active retainers",act.length)+kpi("Monthly from retainers",money(mrr),"good")+kpi("Clients all time",all.length)+kpi("Top client",top?`${esc(top.name)} · $${Math.round(top.paid/1000)}k`:"—","acc");
+  $("#client-kpis").className="kpis k5";$("#client-kpis").innerHTML=kpi("Active retainers",act.length)+kpi("Active projects",all.filter(c=>c.type==="project").length)+kpi("Monthly from retainers",money(mrr),"good")+kpi("Clients all time",all.length)+kpi("Top client",top?`${esc(top.name)} · $${Math.round(top.paid/1000)}k`:"—","acc");
 }
 document.addEventListener("click",e=>{
   const o=e.target.closest("[data-copen]");if(o){const k=o.dataset.copen;state.openClient=state.openClient===k?null:k;render();return}
