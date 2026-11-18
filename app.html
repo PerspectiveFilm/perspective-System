@@ -690,6 +690,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 @media (min-width:1000px){#pf .cm-box{max-height:calc((100vh - 48px)/1.1)}#pf .cm-wrap{padding:20px}}
 #pf .cm-body .cd-logo{display:none}#pf .cm-head .av{width:44px;height:44px;font-size:15px}
 #pf .cm-lk{background:none;border:0;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}#pf .cm-lk:hover{color:var(--unpaid)}#pf .cm-lh{color:var(--muted)}
+#pf .inv-box{width:min(980px,100%)}#pf .inv-box .cm-body{padding:18px 20px 20px}#pf .inv-box .inv-ed{margin:0;border:0;padding:0;background:none;box-shadow:none}
 /* private */
 #pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
 #pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
@@ -1679,10 +1680,15 @@ function renderInv(){const host=$("#inv-list");if(!host)return;const S=invS(),L=
   host.innerHTML=vis.length?vis.map(v=>{const st=invStatus(v);return`<div class="inv-row" data-invopen="${v.id}"><span class="inv-no">#${invNo(v.no)}</span><span class="inv-cl"><b>${esc(v.bill&&v.bill.name||"No client yet")}</b><small>${esc(v.title||"")} · ${esc(v.date||"")}</small></span><span class="inv-amt">${money2(invCalc(v).tot)}</span><span class="inv-st ${st}">${INV_LBL[st]}</span><span></span></div>`}).join(""):`<div class="empty">${L.length?"Nothing here.":"No invoices yet. Click “+ New invoice” to make #"+invNo(S.next)+"."}</div>`;
   {const b=$("#inv-month");if(b){const n=state.loaded!==false?invMonthly().length:0;b.hidden=!state.canEdit||!((state.months[nowKey()]||{}).clients||[]).length;b.disabled=!n;b.textContent=n?`Make ${FULL[curIdx]} invoices · ${n}`:`${FULL[curIdx]} invoices done ✓`}}
   renderInvEd();renderInvSet()}
-function renderInvEd(){const host=$("#inv-editor");if(!host)return;const v=invCur();if(!v){host.innerHTML="";return}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&state.invOpen&&state.view==="inv"){try{document.activeElement.blur()}catch(_){}state.invOpen=null;renderInv()}});
+function renderInvEd(){const host=$("#inv-editor");if(!host)return;const v=invCur(),body=host.querySelector(".cm-body"),st0=body?body.scrollTop:0;renderInvEd0();
+  if(!v){host.className="";host.hidden=true;document.documentElement.style.overflow="";return}
+  const ed=host.firstElementChild;if(ed&&ed.classList.contains("inv-ed")){host.className="cm-wrap inv-modal";host.hidden=false;const box=document.createElement("div");box.className="cm-box inv-box";box.setAttribute("role","dialog");box.setAttribute("aria-modal","true");const b=document.createElement("div");b.className="cm-body";b.appendChild(ed);box.appendChild(b);host.innerHTML='<div class="cm-bg" data-invbg></div>';host.appendChild(box);b.scrollTop=st0}
+  document.documentElement.style.overflow="hidden"}
+function renderInvEd0(){const host=$("#inv-editor");if(!host)return;const v=invCur();if(!v){host.innerHTML="";return}
   if(host.contains(document.activeElement)&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)){invTotals();return}
   const C=invClients(),c=invCalc(v),st=invStatus(v);
-  host.innerHTML=`<div class="inv-ed"><div class="inv-top"><h3>Invoice <span class="inv-num">#${invNo(v.no)}</span> <span class="inv-st ${st}" style="display:inline-block;margin-left:6px">${INV_LBL[st]}</span></h3><button class="btn ghost" type="button" data-invclose>Close</button></div>
+  host.innerHTML=`<div class="inv-ed"><div class="inv-top"><h3>Invoice <span class="inv-num">#${invNo(v.no)}</span> <span class="inv-st ${st}" style="display:inline-block;margin-left:6px">${INV_LBL[st]}</span></h3><button class="cm-x" type="button" data-invclose aria-label="Close" title="Close (Esc)">×</button></div>
     <div class="inv-grid">
       <label class="inv-f full"><span>Client</span><select id="inv-client"><option value="">Choose a client…</option>${(()=>{const act=new Set([...(state.loaded?ckClients(nowKey()):[]).map(c=>slug(c.k)),...Object.entries(state.cmeta||{}).filter(([,m])=>m&&m.type==="project").map(([s2])=>s2)]),o=x=>`<option value="${esc(x.s)}" ${x.s===v.client?"selected":""}>${esc(x.name)}${x.amount?` · last ${money(x.amount)}`:""}</option>`,A=C.filter(x=>act.has(x.s)),O=C.filter(x=>!act.has(x.s));return (A.length?`<optgroup label="Active clients · this month">${A.map(o).join("")}</optgroup>`:"")+`<optgroup label="All other clients">${O.map(o).join("")}</optgroup>`})()}<option value="__new" ${v.client==="__new"?"selected":""}>+ Other / new client</option></select></label>
       <label class="inv-f"><span>Bill to · name</span><input data-iv="bill.name" value="${esc(v.bill.name)}" placeholder="Client business name"></label>
@@ -1723,7 +1729,7 @@ document.addEventListener("click",e=>{const t=e.target;if(!t.closest||!t.closest
   if(t.closest("#inv-set-b")||t.closest("[data-invsetx]")){state.invSet=!state.invSet;renderInvSet();return}
   if(b=t.closest("[data-invf]")){state.invF=b.dataset.invf;renderInv();return}
   if(b=t.closest("[data-invopen]")){state.invOpen=b.dataset.invopen;renderInv();$("#inv-editor").scrollIntoView({behavior:"smooth",block:"start"});return}
-  if(t.closest("[data-invclose]")){state.invOpen=null;renderInv();return}
+  if(t.closest("[data-invclose]")||t.closest("[data-invbg]")){try{document.activeElement.blur()}catch(_){}state.invOpen=null;renderInv();return}
   const v=invCur();if(!state.canEdit)return;
   if(t.closest("[data-invimp]")){const m=$("#inv-imp-m");try{const d=JSON.parse($("#inv-imp").value);const S=invS();if(d.set)S.set={...S.set,...d.set};if(d.clients)for(const k in d.clients)S.clients[k]={...(S.clients[k]||{}),...d.clients[k]};if(d.next)S.next=Math.max(+S.next||0,+d.next);invSave();state.invSet=true;renderInv();const m2=$("#inv-imp-m");if(m2)m2.textContent="Imported ✓"}catch(err){m.textContent="That text isn't valid. Copy it again exactly."}return}
   if(!v)return;
