@@ -1326,7 +1326,7 @@ function renderNow(all){const H=$("#cl-now");if(!H)return;const nk=nowKey(),tm=g
   $("#cc-now").innerHTML=`<b>${L.length}</b> clients · <b>${money(mrr)}</b>/mo from retainers`;
   H.innerHTML=L.map(c=>{const av=avOf(c.name),rows=((state.months[nk]||{}).clients||[]).filter(r=>r.status!=="tax"&&r.name&&clientKey(r.name)===c.key),r=rows[0];
     const kind=c.type==="project"?"Project":r?(grpOf(r,tm)==="con"?"Content":"Marketing"):"Retainer";
-    let st=r?r.status:null;if(st==="unpaid"&&metaOf(c.key).due==="eom")st="notdue";const stl={paid:"Paid",cash:"Cash",unpaid:"Unpaid",deposit:"Deposit",notdue:"Not due yet"}[st]||"";
+    let st=r?r.status:null;if(st==="unpaid"&&metaOf(c.key).due==="eom")st=c.out>0.5?"unpaid":"notdue";if(c.out>0.5&&(st==="paid"||!st)&&c.type!=="project")st="unpaid";const stl={paid:"Paid",cash:"Cash",unpaid:"Unpaid",deposit:"Deposit",notdue:"Not due yet"}[st]||"";
     const since=c.first?`Since ${mLabel(c.first)}`:esc(metaOf(c.key).service||"In progress"),dur=c.count?` · ${c.count} mo`:"";
     return `<button class="now-c" data-copen="${esc(c.key)}" data-nowgo="1"><span class="now-t">${avHtml(c,av,true)}<span class="now-n"><b>${esc(c.name)}</b><small>${kind}</small></span>${st?`<span class="now-st s-${st}">${stl}</span>`:""}</span>
       <span class="now-m">${c.type==="project"?`<b>${money(c.paid+c.out)}</b><small>so far</small>`:`<b>${money(monthly(c))}</b><small>/ month</small>`}</span>
