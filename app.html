@@ -674,6 +674,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 #pf .av[data-avup]{cursor:pointer}#pf .av-cam{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#fff;font-style:normal;font-size:15px;opacity:0;transition:opacity .15s}#pf .av[data-avup]:hover .av-cam{opacity:1}
 #pf .cn-logo{width:20px;height:20px;border-radius:50%;object-fit:contain;background:#000;vertical-align:-4px;margin-right:8px}
 #pf .cd-logo{display:flex;align-items:center;gap:12px;margin:4px 0 12px;font-size:13px;color:var(--muted)}#pf .cd-logo .btn{padding:5px 10px;font-size:12px}
+#pf .sd.nd{background:var(--ink);opacity:.85}
 /* private */
 #pf .pv-gate{max-width:340px;margin:40px auto;text-align:center;padding:32px 24px}
 #pf .pv-gate h3{margin:0 0 6px;font-size:18px;font-weight:600}#pf .pv-gate p{margin:0 0 18px;color:var(--muted);font-size:13px}
@@ -1246,12 +1247,12 @@ function buildClients(){
       const a=agg[k]||(agg[k]={key:k,names:{},months:{},paid:0,out:0,bases:new Set(),al:false});
       a.bases.add(base);if(c.gst===false)a.alN=(a.alN||0)+1;else a.caN=(a.caN||0)+1;a.names[c.name.trim()]=(a.names[c.name.trim()]||0)+1;
       const hst=(mk>=GST_FROM&&rowTaxable(c))?1+GST_RATE:1,amt=(+c.amount||0)*hst,mm=a.months[mk]||(a.months[mk]={paid:0,out:0});
-      if(c.status==="unpaid"){a.out+=amt;mm.out+=amt}else if(c.status==="deposit"){a.out+=amt/2;mm.out+=amt/2;a.paid+=amt/2;mm.paid+=amt/2}else{a.paid+=amt;mm.paid+=amt}
+      const ndue=mk===nk&&metaOf(k).due==="eom";if(c.status==="unpaid"){if(ndue){a.nd=(a.nd||0)+amt;mm.nd=(mm.nd||0)+amt}else{a.out+=amt;mm.out+=amt}}else if(c.status==="deposit"){if(ndue){a.nd=(a.nd||0)+amt/2;mm.nd=(mm.nd||0)+amt/2}else{a.out+=amt/2;mm.out+=amt/2}a.paid+=amt/2;mm.paid+=amt/2}else{a.paid+=amt;mm.paid+=amt}
     }
   }
   const pk=prevKey();
   return Object.values(agg).map(a=>{
-    const ms=Object.keys(a.months).filter(k=>a.months[k].paid+a.months[k].out>0).sort();
+    const ms=Object.keys(a.months).filter(k=>a.months[k].paid+a.months[k].out+(a.months[k].nd||0)>0).sort();
     const ranked=Object.entries(a.names).sort((x,y)=>y[1]-x[1]||x[0].length-y[0].length).map(x=>x[0]);
     const name=metaOf(a.key).name||ranked.find(n=>n.toLowerCase().replace(/\s+/g," ")===a.key)||cleanName(ranked[0]);
     const auto=ms.length>=3?(ms[ms.length-1]>=pk?"active":"inactive"):"oneoff";
@@ -1269,7 +1270,7 @@ async function saveMeta(k,patch){
 function spark(c){if(!c.first)return"";
   const [fy,fm]=c.first.split("-").map(Number),[ly,lm]=c.last.split("-").map(Number);
   const keys=[];for(let y=fy,m=fm;y<ly||(y===ly&&m<=lm);m++){if(m>12){m=1;y++}if(y>ly||(y===ly&&m>lm))break;keys.push(`${y}-${String(m).padStart(2,"0")}`)}
-  const dots=keys.map(k=>{const v=c.months[k];if(!v)return`<i class="sd none" title="${mLabel(k)} · no work"></i>`;const cl=v.out&&v.paid?"part":v.out?"out":"paid";return`<i class="sd ${cl}" title="${mLabel(k)} · ${v.out?money(v.out)+" unpaid":money(v.paid)+" paid"}"></i>`}).join("");
+  const dots=keys.map(k=>{const v=c.months[k];if(!v)return`<i class="sd none" title="${mLabel(k)} · no work"></i>`;const cl=v.out&&v.paid?"part":v.out?"out":v.nd&&!v.paid?"nd":"paid";return`<i class="sd ${cl}" title="${mLabel(k)} · ${v.out?money(v.out)+" unpaid":v.nd&&!v.paid?money(v.nd)+" not due yet (pays end of month)":money(v.paid)+" paid"}"></i>`}).join("");
   return`<div class="sdots" aria-label="Monthly payments">${dots}</div><div class="cstats"><span>${mLabel(c.first)}</span><span style="margin-left:auto">${mLabel(c.last)}</span></div>`;
 }
 const INDUSTRIES=["Restaurants","Fitness","Contractor","Sports","Medical","Spa / Beauty","Events","Hospitality","Real estate","Media","Website","Other"];
@@ -1303,7 +1304,7 @@ function clientDetail(c,all){
   </div>`;
 }
 const CL_LIMIT=10;
-const monthly=c=>{const v=c.months[c.last];return v?v.paid+v.out:0};
+const monthly=c=>{const v=c.months[c.last];return v?v.paid+v.out+(v.nd||0):0};
 function renderTopClients(all){const host=$("#top-list");if(!host)return;const T=all.slice().sort((a,b)=>b.paid-a.paid).slice(0,10),mx=Math.max(1,...T.map(c=>c.paid)),open=!!state.topOpen,V=open?T:T.slice(0,5),tot=all.reduce((s2,c)=>s2+c.paid,0),t10=T.reduce((s2,c)=>s2+c.paid,0);
   $("#top-tot").textContent=tot?`${Math.round(t10/tot*100)}% of all revenue`:"";
   host.innerHTML=V.map((c,i)=>`<button class="irow" type="button" data-topopen="${esc(c.key)}"><span class="in"><span style="color:var(--muted);font-family:var(--mono);margin-right:8px">${i+1}</span>${esc(c.name)}</span><span class="ibar"><i style="width:${(c.paid/mx*100).toFixed(1)}%"></i></span><span class="iv">${money(c.paid)}<small>${c.count} month${c.count===1?"":"s"} · ${c.first===c.last?mLabel(c.first):mLabel(c.first)+" – "+mLabel(c.last)}</small></span></button>`).join("")+(T.length>5?`<button class="cmore" type="button" data-topmore>${open?"− Show less":`+ Show ${T.length-5} more`}</button>`:"")}
@@ -1325,7 +1326,7 @@ function renderNow(all){const H=$("#cl-now");if(!H)return;const nk=nowKey(),tm=g
   $("#cc-now").innerHTML=`<b>${L.length}</b> clients · <b>${money(mrr)}</b>/mo from retainers`;
   H.innerHTML=L.map(c=>{const av=avOf(c.name),rows=((state.months[nk]||{}).clients||[]).filter(r=>r.status!=="tax"&&r.name&&clientKey(r.name)===c.key),r=rows[0];
     const kind=c.type==="project"?"Project":r?(grpOf(r,tm)==="con"?"Content":"Marketing"):"Retainer";
-    const st=r?r.status:null,stl={paid:"Paid",cash:"Cash",unpaid:"Unpaid",deposit:"Deposit"}[st]||"No row yet";
+    let st=r?r.status:null;if(st==="unpaid"&&metaOf(c.key).due==="eom")st="notdue";const stl={paid:"Paid",cash:"Cash",unpaid:"Unpaid",deposit:"Deposit",notdue:"Not due yet"}[st]||"";
     const since=c.first?`Since ${mLabel(c.first)}`:esc(metaOf(c.key).service||"In progress"),dur=c.count?` · ${c.count} mo`:"";
     return `<button class="now-c" data-copen="${esc(c.key)}" data-nowgo="1"><span class="now-t">${avHtml(c,av,true)}<span class="now-n"><b>${esc(c.name)}</b><small>${kind}</small></span>${st?`<span class="now-st s-${st}">${stl}</span>`:""}</span>
       <span class="now-m">${c.type==="project"?`<b>${money(c.paid+c.out)}</b><small>so far</small>`:`<b>${money(monthly(c))}</b><small>/ month</small>`}</span>
@@ -1352,7 +1353,7 @@ function renderClients(){
   try{renderTopClients(all)}catch(e){console.warn(e)}
   const act=all.filter(c=>c.type==="active");
   const top=all.slice().sort((a,b)=>b.paid-a.paid)[0];
-  const mrr=act.reduce((s,c)=>{const v=c.months[c.last];return s+(v?v.paid+v.out:0)},0);
+  const mrr=act.reduce((s,c)=>s+monthly(c),0);
   const by={};all.forEach(c=>{const k=metaOf(c.key).industry||"Untagged";const b=by[k]||(by[k]={n:0,paid:0,mrr:0,act:0});b.n++;b.paid+=c.paid;if(c.type==="active"){b.act++;b.mrr+=monthly(c)}});
   const rows=Object.entries(by).sort((a,b)=>(a[0]==="Untagged")-(b[0]==="Untagged")||b[1].paid-a[1].paid),mx=Math.max(...rows.map(r=>r[1].paid),1);
   $("#ind-list").innerHTML=(state.indOpen?rows:rows.filter((r,ix)=>ix<5||r[0]===state.cind)).map(([k,b])=>`<button class="irow ${state.cind===k?"on":""}" data-cind="${esc(k)}"><span class="in">${esc(k)}</span><span class="ibar"><i style="width:${(b.paid/mx*100).toFixed(1)}%"></i></span><span class="iv">${money(b.paid)}<small>${b.n} client${b.n>1?"s":""}${b.act?` · ${money(b.mrr)}/mo now`:""} · avg ${money(b.paid/b.n)}</small></span></button>`).join("")+(rows.length>5?`<button class="cmore" type="button" data-indmore>${state.indOpen?"− Show less":`+ Show ${rows.length-5} more`}</button>`:"");
@@ -2040,11 +2041,11 @@ function debtors(){
 document.addEventListener("click",e=>{if(!e.target.closest("[data-dmore]"))return;state.dMore=!state.dMore;renderDebtors()});
 function renderDebtors(){
   const host=$("#debt-list");if(!host)return;
-  const D=debtors(),tot=D.reduce((s,d)=>s+d.total,0),nk=nowKey(),nOwe=D.filter(d=>d.total>0).length;
+  const D0=debtors(),D=D0.filter(d=>d.total>0);D.later=D0.later;const tot=D.reduce((s,d)=>s+d.total,0),nk=nowKey(),nOwe=D.filter(d=>d.total>0).length;
   $("#debt-sub").textContent=nOwe?`${nOwe} client${nOwe>1?"s":""} · ${money(tot)} owed · incl. GST`:"";
   if(!state.loaded){host.innerHTML=`<div class="d-empty">Loading…</div>`;return}
-  host.innerHTML=D.length?(state.dMore?D:D.slice(0,5)).map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.map(it=>`<span class="${it.nd?"nd":"old"}" ${it.nd?`title="Not due yet"`:""}>${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
-      <div class="d-a ${d.total?"":"nd"}">${d.total?money(d.total):money(d.later)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+(D.length>5?`<button class="yr-more" data-dmore>${state.dMore?"Show less":`See all ${D.length}`}</button>`:"")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
+  host.innerHTML=D.length?(state.dMore?D:D.slice(0,5)).map(d=>`<div class="d-row"><div><div class="d-n">${esc(d.name)}</div><div class="d-ms">${d.items.filter(it=>!it.nd).map(it=>`<span class="${it.nd?"nd":"old"}" ${it.nd?`title="Not due yet"`:""}>${MONTHS[it.i]}${it.y!==YEAR?" "+it.y:""}${new Set(d.items.map(z=>z.nm)).size>1?" "+esc(it.nm):""} · ${money(it.owed)}${it.dep?" (deposit)":""}</span>`).join("")}</div></div>
+      <div class="d-a">${money(d.total)}</div>${state.canEdit?`<button class="d-pay" data-dpay="${esc(d.k)}">Paid</button>`:"<span></span>"}</div>`).join("")+(D.length>5?`<button class="yr-more" data-dmore>${state.dMore?"Show less":`See all ${D.length}`}</button>`:"")+`<div class="d-tot"><span>Total owed</span><b>${money(tot)}</b></div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"")
     :`<div class="d-empty">All paid up. Nobody owes you anything.</div>`+(D.later?`<div class="d-tot d-later"><span>Not due yet</span><b>${money(D.later)}</b></div>`:"");
 }
 document.addEventListener("click",async e=>{
