@@ -517,6 +517,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .tx-sl:not(.rm) .tx-undo{grid-column:auto}
 #pf .tx-undo:hover{color:var(--ink)}
 #pf .tx-note{font-size:11.5px;color:var(--muted);margin:8px 0 0}
+#pf .tx-exa{display:flex;align-items:center;gap:4px;min-width:0}#pf .tx-exa input{flex:1}
+#pf .tx-exa input{font:inherit;font-family:var(--mono);font-size:13px;text-align:right;color:var(--ink);background:var(--soft);border:0;border-radius:6px;padding:3px 6px;width:100%;min-width:0}
+#pf .tx-exa .x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;padding:0}
+#pf .tx-exa .x:hover{color:var(--unpaid)}
+#pf .tx-er:has(.tx-exa){grid-template-columns:minmax(0,1fr) 170px 116px}
+#pf .tx-xf{display:grid;grid-template-columns:minmax(0,1fr) 170px 96px auto;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+#pf .tx-xf input,#pf .tx-xf select{font:inherit;font-size:13px;color:var(--ink);background:var(--soft);border:0;border-radius:8px;padding:8px 10px;min-width:0}
+#pf .tx-xf #tx-xa{font-family:var(--mono);text-align:right}
+@media (max-width:520px){#pf .tx-xf{grid-template-columns:1fr 1fr}#pf .tx-xf #tx-xn{grid-column:span 2}}
 #pf .tx-rate{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:12px}
 #pf .tx-rate input{width:56px;font:inherit;font-family:var(--mono);color:var(--ink);background:var(--soft);border:0;border-radius:6px;padding:4px 6px;text-align:right}
 #pf .tx-cat{display:grid;grid-template-columns:minmax(0,1fr) auto 22px;gap:8px;align-items:center;margin:14px 0 2px;padding-top:10px;border-top:1px dashed var(--line)}
@@ -2493,21 +2502,21 @@ function renderYearly(){const host=$("#yr-card");if(!host)return;const y=state.y
 
 /* ---------- taxes ---------- */
 const TX_CATS=[{id:"ads",n:"Advertising"},{id:"subs",n:"Software & subscriptions"},{id:"car",n:"Car, gas & parking"},{id:"team",n:"Team / subcontractors"},{id:"equip",n:"Equipment"},{id:"other",n:"Other"}];
-function txData(y){const Y=state.yearly||{},t=(Y[String(y)]||{}).tax||{};return{rate:t.rate!=null?+t.rate:30,paid:t.paid||{},cats:t.cats||TX_CATS,rows:t.rows||{},adj:t.adj||{}}}
+function txData(y){const Y=state.yearly||{},t=(Y[String(y)]||{}).tax||{};return{rate:t.rate!=null?+t.rate:30,paid:t.paid||{},cats:t.cats||TX_CATS,rows:t.rows||{},adj:t.adj||{},extra:t.extra||[]}}
 function txMut(y,fn){state.yearly=JSON.parse(JSON.stringify(state.yearly||{}));const k=String(y);state.yearly[k]=state.yearly[k]||{items:[]};const t=txData(y);fn(t);state.yearly[k].tax=t;yrSave(y)}
 function txRows(y){const R={},add=(k,name,amt,cat)=>{if(!amt)return;const r=R[k]||(R[k]={k,name,amt:0,cat});r.amt+=amt};
   for(let i=0;i<12;i++){cardItems(i,y).forEach(x=>{const n=bizName(x);add("c:"+n,n,+x.amount||0,["ads","subs","car","other"][bizGrp(x)])});
     const m=state.months[key(i,y)]||{};(m.expenses||[]).forEach(x=>add("e:"+(x.name||"").trim(),(x.name||"Expense").trim(),+x.amount||0,"other"));
     (m.team||[]).forEach(x=>add("t:"+(x.name||"").trim(),(x.name||"Team").trim(),+x.amount||0,"team"))}
   yrItems(y).forEach(x=>{if(x.kind==="inv")add("i:"+(x.name||"").trim(),(x.name||"Equipment").trim(),+x.amount||0,"equip")});
-  const T=txData(y);return Object.values(R).map(r=>{const o=T.rows[r.k]||{};return{...r,title:o.t||r.name,cat:T.cats.some(c=>c.id===o.c)?o.c:(T.cats.some(c=>c.id===r.cat)?r.cat:T.cats[T.cats.length-1].id)}}).sort((a,b)=>b.amt-a.amt)}
+  const T=txData(y);T.extra.forEach(x=>{R["x:"+x.id]={k:"x:"+x.id,name:x.t||"Expense",amt:+x.amt||0,cat:x.c||"other",ex:x.id}});return Object.values(R).map(r=>{const o=T.rows[r.k]||{};return{...r,title:o.t||r.name,cat:T.cats.some(c=>c.id===o.c)?o.c:(T.cats.some(c=>c.id===r.cat)?r.cat:T.cats[T.cats.length-1].id)}}).sort((a,b)=>b.amt-a.amt)}
 function txMonth(i,y,T){const s=stats(i,y),mk=key(i,y),A=T.adj[mk]||{},rate=hasGst(i,y)?GST_RATE:0;let dP=0,dG=0;
   const C=((s.m.clients)||[]).filter(x=>x.status!=="tax").map((x,j)=>{const k=j+"|"+(x.name||""),o=+x.amount||0,has=Object.prototype.hasOwnProperty.call(A,k),v=has?(A[k]==null?0:+A[k]):o,tx=rowTaxable(x);dP+=o-v;if(tx)dG+=(o-v)*rate;return{k,name:x.name||"",o,v,has,rm:has&&A[k]==null,tx,st:x.status}});
   return{s,C,gst:s.gst-dG,profit:s.profit-s.gst-dP,edited:C.some(c=>c.has)}}
 function renderTax(){const host=$("#tx-months"),eh=$("#tx-exp");if(!host||!eh)return;const y=state.year,T=txData(y),ro=state.canEdit?"":"readonly",dis=state.canEdit?"":"disabled",last=lastIdx(y);
   $("#tx-title").textContent="Taxes "+y;
   if((host.contains(document.activeElement)||eh.contains(document.activeElement))&&document.activeElement.matches("input"))return;
-  const S=MONTHS.map((_,i)=>txMonth(i,y,T)),R=txRows(y),eq=R.filter(r=>r.cat==="equip").reduce((s,r)=>s+r.amt,0);
+  const S=MONTHS.map((_,i)=>txMonth(i,y,T)),R=txRows(y),eq=R.filter(r=>r.cat==="equip"&&!r.ex).reduce((s,r)=>s+r.amt,0)+R.filter(r=>r.ex).reduce((s,r)=>s+r.amt,0);
   let P=0,G=0,PD=0;S.forEach((s,i)=>{if(i<=last){P+=s.profit;G+=s.gst}PD+=+(T.paid[key(i,y)]||0)});
   const taxable=Math.max(0,P-eq),inc=taxable*T.rate/100,owe=inc+G,left=owe-PD;
   $("#tx-sub").textContent=`estimate · ${T.rate}% income tax + HST`;
@@ -2519,21 +2528,27 @@ function renderTax(){const host=$("#tx-months"),eh=$("#tx-exp");if(!host||!eh)re
   const open=state.txOpen||{};
   eh.innerHTML=`<div class="tx-row hd" style="grid-template-columns:1fr auto"><span>Expenses ${y}</span><span>${money2(R.reduce((s,r)=>s+r.amt,0))}</span></div>`+T.cats.map(c=>{const L=R.filter(r=>r.cat===c.id),t=L.reduce((s,r)=>s+r.amt,0),V=open[c.id]?L:L.slice(0,5);
     return`<div class="tx-cat"><input value="${esc(c.n)}" data-txcat="${c.id}" ${ro} aria-label="Section name"><b>${money2(t)}</b><span>${state.canEdit&&!L.length?`<button class="x" data-txcdel="${c.id}" aria-label="Remove section">×</button>`:""}</span></div>`
-     +V.map(r=>`<div class="tx-er"><input value="${esc(r.title)}" data-txt="${esc(r.k)}" ${ro} aria-label="Title"><select data-txsel="${esc(r.k)}" ${dis} aria-label="Section">${T.cats.map(o=>`<option value="${o.id}" ${o.id===r.cat?"selected":""}>${esc(o.n)}</option>`).join("")}</select><span>${money2(r.amt)}</span></div>`).join("")
+     +V.map(r=>`<div class="tx-er"><input value="${esc(r.title)}" data-txt="${esc(r.k)}" ${ro} aria-label="Title"><select data-txsel="${esc(r.k)}" ${dis} aria-label="Section">${T.cats.map(o=>`<option value="${o.id}" ${o.id===r.cat?"selected":""}>${esc(o.n)}</option>`).join("")}</select>${r.ex?`<span class="tx-exa"><input inputmode="decimal" data-txxa="${r.ex}" value="${money2(r.amt)}" ${ro} aria-label="Amount">${state.canEdit?`<button class="x" data-txxdel="${r.ex}" aria-label="Remove expense">×</button>`:""}</span>`:`<span>${money2(r.amt)}</span>`}</div>`).join("")
      +(L.length>5?`<button class="yr-more" data-txmore="${c.id}">${open[c.id]?"Show less":`Show all ${L.length}`}</button>`:"")}).join("")
-   +(state.canEdit?`<button class="tx-add" data-txcadd>+ Add section</button>`:"")}
+   +(state.canEdit?`<form class="tx-xf" id="tx-xf"><input id="tx-xn" placeholder="Add expense" required aria-label="Expense name"><select id="tx-xc" aria-label="Section">${T.cats.map(o=>`<option value="${o.id}" ${o.id==="other"?"selected":""}>${esc(o.n)}</option>`).join("")}</select><input id="tx-xa" inputmode="decimal" placeholder="$0" required aria-label="Amount"><button class="btn">Add</button></form><button class="tx-add" data-txcadd>+ Add section</button>`:"")}
 document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||!state.canEdit)return;const y=state.year,d=el.dataset;
   if(d.txsale!=null){const v=parseAmt(el.value),k=d.k,mk=d.txsale;const C=txMonth(+mk.slice(5)-1,y,txData(y)).C.find(c=>c.k===k);txMut(y,T=>{T.adj[mk]={...(T.adj[mk]||{})};if(C&&Math.abs(v-C.o)<0.005)delete T.adj[mk][k];else T.adj[mk][k]=v;if(!Object.keys(T.adj[mk]).length)delete T.adj[mk]});el.blur();renderTax()}
   else if(d.txpaid!=null){const v=parseAmt(el.value);txMut(y,T=>{if(v)T.paid[d.txpaid]=v;else delete T.paid[d.txpaid]});el.blur();renderTax()}
   else if(d.txrate!=null){const v=parseFloat(String(el.value).replace(/[^\d.]/g,""));txMut(y,T=>{if(v>=0&&v<=100)T.rate=v});el.blur();renderTax()}
   else if(d.txcat!=null){const v=el.value.trim();txMut(y,T=>{T.cats=T.cats.map(c=>c.id===d.txcat&&v?{...c,n:v}:c)});el.blur();renderTax()}
-  else if(d.txt!=null){const v=el.value.trim();txMut(y,T=>{T.rows[d.txt]={...(T.rows[d.txt]||{})};if(v)T.rows[d.txt].t=v;else delete T.rows[d.txt].t});el.blur();renderTax()}
+  else if(d.txt!=null&&!String(d.txt).startsWith("x:")){const v=el.value.trim();txMut(y,T=>{T.rows[d.txt]={...(T.rows[d.txt]||{})};if(v)T.rows[d.txt].t=v;else delete T.rows[d.txt].t});el.blur();renderTax()}
+  else if(d.txxa!=null){const v=parseAmt(el.value);txMut(y,T=>{T.extra=T.extra.map(x=>x.id===d.txxa?{...x,amt:v}:x)});el.blur();renderTax()}
+  else if(d.txsel!=null&&String(d.txsel).startsWith("x:")){const id=d.txsel.slice(2);txMut(y,T=>{T.extra=T.extra.map(x=>x.id===id?{...x,c:el.value}:x)});renderTax()}
+  else if(d.txt!=null&&String(d.txt).startsWith("x:")){const id=d.txt.slice(2),v=el.value.trim();txMut(y,T=>{T.extra=T.extra.map(x=>x.id===id&&v?{...x,t:v}:x)});el.blur();renderTax()}
   else if(d.txsel!=null){txMut(y,T=>{T.rows[d.txsel]={...(T.rows[d.txsel]||{}),c:el.value}});renderTax()}});
+document.addEventListener("submit",e=>{if(e.target.id!=="tx-xf")return;e.preventDefault();if(!state.canEdit)return;const n=$("#tx-xn").value.trim(),a=parseAmt($("#tx-xa").value),c=$("#tx-xc").value;if(!n)return;
+  txMut(state.year,T=>{T.extra=[...T.extra,{id:Date.now().toString(36),t:n,c,amt:a}]});state.txOpen={...(state.txOpen||{}),[c]:true};renderTax();const i=$("#tx-xn");if(i)i.focus()});
 document.addEventListener("click",e=>{const y=state.year;let b=e.target.closest("[data-txmore]");if(b){state.txOpen={...(state.txOpen||{}),[b.dataset.txmore]:!(state.txOpen||{})[b.dataset.txmore]};renderTax();return}
   if(b=e.target.closest("[data-txm]")){state.txM=state.txM===b.dataset.txm?null:b.dataset.txm;renderTax();return}
   if(!state.canEdit)return;
   if(b=e.target.closest("[data-txrm]")){const mk=b.dataset.txrm,k=b.dataset.k;txMut(y,T=>{T.adj[mk]={...(T.adj[mk]||{}),[k]:null}});renderTax();return}
   if(b=e.target.closest("[data-txrs]")){const mk=b.dataset.txrs,k=b.dataset.k;txMut(y,T=>{if(T.adj[mk]){delete T.adj[mk][k];if(!Object.keys(T.adj[mk]).length)delete T.adj[mk]}});renderTax();return}
+  if(b=e.target.closest("[data-txxdel]")){txMut(y,T=>{T.extra=T.extra.filter(x=>x.id!==b.dataset.txxdel)});renderTax();return}
   if(b=e.target.closest("[data-txdel]")){txMut(y,T=>{delete T.paid[b.dataset.txdel]});renderTax();return}
   if(b=e.target.closest("[data-txcdel]")){txMut(y,T=>{T.cats=T.cats.filter(c=>c.id!==b.dataset.txcdel)});renderTax();return}
   if(e.target.closest("[data-txcadd]")){txMut(y,T=>{T.cats=[...T.cats,{id:"c"+Date.now().toString(36),n:"New section"}]});renderTax();const I=document.querySelectorAll("[data-txcat]");const l=I[I.length-1];if(l){l.focus();l.select()}}});
