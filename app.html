@@ -526,6 +526,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 #pf .tx-xf input,#pf .tx-xf select{font:inherit;font-size:13px;color:var(--ink);background:var(--soft);border:0;border-radius:8px;padding:8px 10px;min-width:0}
 #pf .tx-xf #tx-xa{font-family:var(--mono);text-align:right}
 @media (max-width:520px){#pf .tx-xf{grid-template-columns:1fr 1fr}#pf .tx-xf #tx-xn{grid-column:span 2}}
+#pf .biz-li.proj{cursor:default}#pf .biz-li.proj .biz-n{color:var(--muted)}
 #pf .tx-rate{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:12px}
 #pf .tx-rate input{width:56px;font:inherit;font-family:var(--mono);color:var(--ink);background:var(--soft);border:0;border-radius:6px;padding:4px 6px;text-align:right}
 #pf .tx-cat{display:grid;grid-template-columns:minmax(0,1fr) auto 22px;gap:8px;align-items:center;margin:14px 0 2px;padding-top:10px;border-top:1px dashed var(--line)}
@@ -1025,7 +1026,14 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const money=n=>"$"+Math.round(n).toLocaleString("en-CA");
 const key=(i,y=state.year)=>`${y}-${String(i+1).padStart(2,"0")}`;
 const sum=(a,f=()=>true)=>a.filter(f).reduce((s,x)=>s+(+x.amount||0),0);
-function cardItems(i,y){try{const S=(state.priv&&state.priv.items)||[],mk=key(i,y);return S.filter(x=>bizIs(x)&&String(x.d||"").startsWith(mk)).sort((a,b)=>String(b.d).localeCompare(String(a.d)))}catch(e){return []}}
+function cardItems(i,y){try{const S=(state.priv&&state.priv.items)||[],mk=key(i,y);const L=S.filter(x=>bizIs(x)&&String(x.d||"").startsWith(mk)).sort((a,b)=>String(b.d).localeCompare(String(a.d)));if(!L.length&&y>YEAR)return projCard(y).filter(x=>x.d.startsWith(mk));return L}catch(e){return []}}
+let _pc=null;function projCard(y){const S=(state.priv&&state.priv.items)||[],P=state.priv||{},sig=y+"|"+S.length+"|"+(P.subHide||[]).join(",")+"|"+S.reduce((a,x)=>a+(+x.amount||0)+(x.biz===false?1:0),0);if(_pc&&_pc.sig===sig)return _pc.L;
+  const B=String(YEAR),base=S.filter(x=>bizIs(x)&&String(x.d||"").startsWith(B+"-")),mset=new Set(base.map(x=>String(x.d).slice(0,7))),n=Math.max(1,mset.size),out=[];
+  const HID=P.subHide||[],subs=subsList(S).filter(x=>!HID.includes(x.n));
+  for(let i=0;i<12;i++){const mk=key(i,y);
+    subs.forEach(x=>{if(x.monthly||+String(x.last).slice(5,7)===i+1)out.push({d:mk+"-15",name:x.n,raw:x.n,amount:Math.round(x.price*100)/100,kind:"bcc",biz:true,proj:true,g:1})});
+    [[0,"Ads"],[2,"Car, gas & parking"],[3,"Other"]].forEach(([g,lab])=>{const t=base.filter(x=>bizGrp(x)===g).reduce((s,x)=>s+(+x.amount||0),0)/n;if(t>0.5)out.push({d:mk+"-15",name:B+" monthly average",raw:"",amount:Math.round(t*100)/100,kind:"bcc",biz:true,proj:true,g})})}
+  _pc={sig,L:out};return out}
 function cardSum(i,y){return cardItems(i,y).reduce((s,x)=>s+(+x.amount||0),0)}
 function stats(i,y=state.year){
   const m=state.months[key(i,y)]||{clients:[],team:[],expenses:[]};
@@ -2159,18 +2167,18 @@ const BIZ_G=[["Ads",/facebook|facebk|meta|google\s*\*?\s*ads|instagram|mr ?signs
 const bizPrime=x=>/amazon|amzn/i.test((x.name||"")+" "+(x.raw||""))&&!/primevideo/i.test(x.raw||"")&&(/prime/i.test(x.raw||"")||/^amazon$/i.test(String(x.raw||"").trim())||Math.abs((+(x.orig!=null?x.orig:x.amount)||0)-11.29)<0.01);
 const BIZ_CUT="2026-11-21";/* from this date: everything on the business card is business; on the personal card only gas */
 const bizIs=x=>(x.kind==="pcc"||x.kind==="bcc")&&(x.biz===false?false:x.biz===true?true:String(x.d||"")>=BIZ_CUT?(x.kind==="bcc"?true:(x.cat||"")==="Gas"):["Business","Gas","Car & parking","Fees & interest"].includes(x.cat||"")||bizPrime(x)||/apple\.com|apple subscr|youtube|google ?\*?\s*google one|google one|icloud|uber(?! ?eats)/i.test((x.name||"")+" "+(x.raw||"")));
-const bizGrp=x=>{const t=(x.name||"")+" "+(x.raw||"");if(bizPrime(x))return 1;if(x.cat==="Fees & interest")return 3;if(/apple\.com|apple subscr|youtube|google ?\*?\s*google one|google one|icloud/i.test(t))return 1;if(x.cat==="Gas"||x.cat==="Car & parking")return 2;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
+const bizGrp=x=>{if(x.g!=null)return x.g;const t=(x.name||"")+" "+(x.raw||"");if(bizPrime(x))return 1;if(x.cat==="Fees & interest")return 3;if(/apple\.com|apple subscr|youtube|google ?\*?\s*google one|google one|icloud/i.test(t))return 1;if(x.cat==="Gas"||x.cat==="Car & parking")return 2;for(let i=0;i<3;i++)if(BIZ_G[i][1].test(t))return i;return 3};
 const BIZ_NAMES=[[/amazon|amzn/i,x=>bizPrime(x)?"Amazon Prime":"Amazon"],[/squarespace|sqsp/i,x=>/acuity/i.test(x.raw||x.name)?"Acuity":/domain/i.test(x.raw||x.name)?"Domain":"Squarespace"],[/acuity/i,"Acuity"],[/apple/i,"Apple"],[/youtube/i,"YouTube"],[/google.{0,4}one/i,"Google One"],[/google.{0,3}ads/i,"Google Ads"],[/facebk|facebook|meta/i,"Facebook Ads"],[/chatgpt|openai/i,"ChatGPT"],[/claude|anthropic/i,"Claude"],[/adobe/i,"Adobe"],[/metricool/i,"Metricool"],[/uppbeat/i,"Uppbeat"],[/zapier/i,"Zapier"],[/notion/i,"Notion"],[/wetransfer/i,"WeTransfer"],[/free to use/i,"Free To Use"],[/canva/i,"Canva"],[/parking ticket|rsd -/i,"Parking ticket"],[/uber/i,"Uber"],[/shell/i,"Shell"],[/petro/i,"Petro-Canada"],[/\besso\b/i,"Esso"],[/407/i,"407 ETR"],[/u-haul/i,"U-Haul"],[/parking|park(edin|link)|impark|indigo|honk|target park|green p|cumberland|brookfield/i,"Parking"],[/interest/i,"Interest"],[/fee/i,"Card fee"],[/cpc|canada post/i,"Canada Post"],[/mr ?signs/i,"Mr Signs"],[/mrprinter/i,"MrPrinter"],[/nook studio/i,"Nook Studio"]];
-function bizName(x){const t=(x.name||"")+" "+(x.raw||"");for(const [r,n] of BIZ_NAMES)if(r.test(t))return typeof n==="function"?n(x):n;return String(x.name||"").split(/\s+/).slice(0,3).join(" ")}
+function bizName(x){if(x.proj)return x.name;const t=(x.name||"")+" "+(x.raw||"");for(const [r,n] of BIZ_NAMES)if(r.test(t))return typeof n==="function"?n(x):n;return String(x.name||"").split(/\s+/).slice(0,3).join(" ")}
 let bizOpenId=null;
-function bizRow(x,S,lineCls){const id=S.indexOf(x),open=bizOpenId===id,orig=x.orig!=null&&x.orig!==x.amount;
+function bizRow(x,S,lineCls){if(x.proj)return `<div class="biz-li proj" title="Projected from ${YEAR}"><div class="biz-top"><span class="biz-n">${esc(x.name)}</span><span class="biz-r"><b>${money2(x.amount)}</b></span></div></div>`;const id=S.indexOf(x),open=bizOpenId===id,orig=x.orig!=null&&x.orig!==x.amount;
   return `<div class="biz-li${open?" open":""}" data-bopen="${id}"><div class="biz-top"><span class="biz-n">${esc(bizName(x))}</span><span class="biz-r"><b>${money2(x.amount)}</b>${state.canEdit?`<button class="x ax-btn" data-cxoff="${id}" title="Not a business expense" aria-label="Remove from business">×</button>`:""}</span></div>${open?`<div class="biz-d"><div><span>Bank name</span><b>${esc(x.raw||x.name)}</b></div><div><span>Date</span><b>${yrDate(x.d)}</b></div><div><span>Card</span><b>${x.kind==="bcc"?"Business card":"Personal card"}</b></div><div><span>Category</span><b>${esc(x.cat||"Other")}</b></div>${orig?`<div><span>Refund</span><b>${money2(x.orig-x.amount)} off ${money2(x.orig)}</b></div>`:""}</div>`:""}</div>`}
 document.addEventListener("click",e=>{if(e.target.closest("[data-cxoff]"))return;const r=e.target.closest("[data-bopen]");if(!r)return;const id=+r.dataset.bopen;bizOpenId=bizOpenId===id?null:id;render()});
 const bizMore={};
 function renderBizCards(){const H=$("#biz-cards");if(!H)return;let S=[];try{S=(state.priv&&state.priv.items)||JSON.parse(localStorage.getItem("pf-priv")||"{}").items||[]}catch(e){}
-  const y=state.year,mk=key(state.sel,y),A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(!A.length){H.innerHTML="";return}
+  const y=state.year,mk=key(state.sel,y);let A=S.filter(bizIs).filter(x=>String(x.d||"").startsWith(y+"-"));if(y>YEAR){const have=new Set(A.map(x=>String(x.d).slice(0,7)));A=[...A,...projCard(y).filter(x=>!have.has(x.d.slice(0,7)))]}if(!A.length){H.innerHTML="";return}const isP=A.some(x=>x.proj&&x.d.startsWith(mk));
   const tot=L=>L.reduce((s,x)=>s+(+x.amount||0),0),M=A.filter(x=>String(x.d).startsWith(mk));
-  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Credit Card Expenses · ${FULL[state.sel]}</h2><span class="ro-note">${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · counted in expenses</span></div>
+  H.innerHTML=`<div class="sec-h" style="margin-top:28px"><h2 style="font-size:20px">Credit Card Expenses · ${FULL[state.sel]}</h2><span class="ro-note">${isP?`projected from ${YEAR} · `:""}${money2(tot(M))} this month · ${money2(tot(A))} in ${y} · counted in expenses</span></div>
   <div class="pv-catg">${BIZ_G.map((g,i)=>{const L=M.filter(x=>bizGrp(x)===i).sort((a,b)=>String(b.d).localeCompare(String(a.d))),Y=A.filter(x=>bizGrp(x)===i),sh=bizMore[i]?L:L.slice(0,5);
     return `<div class="card pv-cat"><div class="pv-cch"><h3>${g[0]}</h3><div class="pv-ccs"><span>${MONTHS[state.sel]} <b>${money2(tot(L))}</b></span><span>${y} <b>${money2(tot(Y))}</b></span></div></div>
     ${sh.map(x=>bizRow(x,S)).join("")||`<p class="ro-note" style="margin:6px 0">Nothing in ${FULL[state.sel]}</p>`}
