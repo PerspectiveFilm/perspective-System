@@ -1027,7 +1027,7 @@ const money=n=>"$"+Math.round(n).toLocaleString("en-CA");
 const key=(i,y=state.year)=>`${y}-${String(i+1).padStart(2,"0")}`;
 const sum=(a,f=()=>true)=>a.filter(f).reduce((s,x)=>s+(+x.amount||0),0);
 function cardItems(i,y){try{const S=(state.priv&&state.priv.items)||[],mk=key(i,y);const L=S.filter(x=>bizIs(x)&&String(x.d||"").startsWith(mk)).sort((a,b)=>String(b.d).localeCompare(String(a.d)));if(!L.length&&y>YEAR)return projCard(y).filter(x=>x.d.startsWith(mk));return L}catch(e){return []}}
-let _pc=null;function projCard(y){const S=(state.priv&&state.priv.items)||[],P=state.priv||{},sig=y+"|"+S.length+"|"+(P.subHide||[]).join(",")+"|"+S.reduce((a,x)=>a+(+x.amount||0)+(x.biz===false?1:0),0);if(_pc&&_pc.sig===sig)return _pc.L;
+let _pc=null;const PROJ_OFF=true;function projCard(y){if(PROJ_OFF)return [];const S=(state.priv&&state.priv.items)||[],P=state.priv||{},sig=y+"|"+S.length+"|"+(P.subHide||[]).join(",")+"|"+S.reduce((a,x)=>a+(+x.amount||0)+(x.biz===false?1:0),0);if(_pc&&_pc.sig===sig)return _pc.L;
   const B=String(YEAR),base=S.filter(x=>bizIs(x)&&String(x.d||"").startsWith(B+"-")),mset=new Set(base.map(x=>String(x.d).slice(0,7))),n=Math.max(1,mset.size),out=[];
   const HID=P.subHide||[],subs=subsList(S).filter(x=>!HID.includes(x.n));
   for(let i=0;i<12;i++){const mk=key(i,y);
