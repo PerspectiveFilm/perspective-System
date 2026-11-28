@@ -1101,7 +1101,7 @@ function yearStats(y){const a=MONTHS.map((_,i)=>stats(i,y));const t=f=>a.reduce(
 function drawAllTime(svg){
   const W=720,H=168,L=40,R=10,T=14,B=40,iw=W-L-R,ih=H-T-B;
   const S=YEARS.map(y=>({y,...yearStats(y)}));
-  const M=[];YEARS.forEach(y=>MONTHS.forEach((_,i)=>{if(y===YEARS[0]&&i<3)return;const s=stats(i,y);M.push({y,i,rev:s.rev,profit:s.profit,fut:y>YEAR||(y===YEAR&&i>curIdx)})}));
+  const NXK=curIdx===11?key(0,YEAR+1):key(curIdx+1,YEAR),M=[];YEARS.forEach(y=>MONTHS.forEach((_,i)=>{if(y===YEARS[0]&&i<3)return;if(key(i,y)>NXK)return;const s=stats(i,y);M.push({y,i,rev:s.rev,profit:s.profit,fut:y>YEAR||(y===YEAR&&i>curIdx)})}));
   const n=M.length,max=Math.max(5000,...M.map(m=>m.rev)),step=max>40000?20000:max>20000?10000:5000,top=Math.ceil(max/step)*step;
   const xx=k=>L+(n<2?iw/2:k*iw/(n-1)),yy=v=>T+ih-(Math.max(0,v)/top)*ih;
   let g="";
