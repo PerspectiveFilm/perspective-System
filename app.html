@@ -888,7 +888,7 @@ html.p-lock,html.p-lock body{overflow:hidden}
 
   <div id="v-tax" hidden>
     <section style="margin-top:40px">
-      <div class="sec-h"><h2 id="tx-title">Taxes</h2><span class="eyebrow" id="tx-sub"></span></div>
+      <div class="sec-h"><div><h2 id="tx-title">Taxes</h2><span class="eyebrow" id="tx-sub"></span></div><div class="months" id="tx-years"></div></div>
       <div class="kpis" id="tx-kpis" style="margin-bottom:14px"></div>
       <div class="tx-wrap"><div class="card" id="tx-months"></div><div class="card" id="tx-exp"></div></div>
     </section>
@@ -2543,7 +2543,7 @@ function txMonth(i,y,T){const s=stats(i,y),mk=key(i,y),A=T.adj[mk]||{},rate=hasG
   const C=((s.m.clients)||[]).filter(x=>x.status!=="tax").map((x,j)=>{const k=j+"|"+(x.name||""),o=+x.amount||0,has=Object.prototype.hasOwnProperty.call(A,k),v=has?(A[k]==null?0:+A[k]):o,tx=rowTaxable(x);dP+=o-v;if(tx)dG+=(o-v)*rate;return{k,name:x.name||"",o,v,has,rm:has&&A[k]==null,tx,st:x.status}});
   return{s,C,gst:s.gst-dG,profit:s.profit-s.gst-dP,edited:C.some(c=>c.has)}}
 function renderTax(){const host=$("#tx-months"),eh=$("#tx-exp");if(!host||!eh)return;const y=state.year,T=txData(y),ro=state.canEdit?"":"readonly",dis=state.canEdit?"":"disabled",last=lastIdx(y);
-  $("#tx-title").textContent="Taxes "+y;
+  $("#tx-title").textContent="Taxes "+y;const yp=$("#tx-years");if(yp)yp.innerHTML=YEARS.map(z=>`<button aria-pressed="${z===y}" data-year="${z}">${z}</button>`).join("");
   if((host.contains(document.activeElement)||eh.contains(document.activeElement))&&document.activeElement.matches("input"))return;
   const S=MONTHS.map((_,i)=>txMonth(i,y,T)),R=txRows(y),eq=R.filter(r=>r.cat==="equip"&&!r.ex&&!r.rm).reduce((s,r)=>s+r.amt,0)+R.filter(r=>r.ex).reduce((s,r)=>s+r.amt,0)-R.filter(r=>r.rm&&r.cat!=="equip").reduce((s,r)=>s+r.amt,0),RM=R.filter(r=>r.rm);
   let P=0,G=0,PD=0;S.forEach((s,i)=>{if(i<=last){P+=s.profit;G+=s.gst}PD+=+(T.paid[key(i,y)]||0)});
