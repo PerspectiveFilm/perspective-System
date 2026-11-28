@@ -1009,12 +1009,15 @@ const CASH_CLIENT=/^core\b/i; // Core always pays cash: no GST
 const now=new Date();
 const curIdx=now.getFullYear()===YEAR?now.getMonth():(now.getFullYear()>YEAR?11:0);
 const state={months:{},todos:[],loaded:false,canEdit:true,sel:curIdx,view:"home",year:YEAR,cmeta:{},openClient:null,cexp:{},cind:null,csrc:null,ccty:null,learn:[],lEdit:false,links:null,sys:null,sEdit:false,leads:null,zEdit:false,zOpen:null,qs:null,qEdit:false,pipe:[],pOpen:null,inv:null,invOpen:null,check:{},yearly:{}};
-const YEARS=[2021,2022,2023,2024,2025,2026];
+const YEARS=[2021,2022,2023,2024,2025,2026,2027];
 const lastIdx=y=>y<YEAR?11:y===YEAR?curIdx:-1;
 let db=null;
 const SEED_MONTHS={};
 const SEED_TODOS=[];
 function saveLocal(){try{localStorage.setItem("pf-months-v2",JSON.stringify(state.months));localStorage.setItem("pf-todos-v2",JSON.stringify(state.todos))}catch(e){}}
+function seed2027(){try{if(!state.canEdit||Object.keys(state.months||{}).some(k=>k.startsWith("2027-")))return;const D=state.months["2026-12"];if(!D)return;
+  const C=(D.clients||[]).filter(x=>x.grp!=="one"&&x.status!=="tax").map(x=>{const o={...x,status:"unpaid"};delete o.paidOn;delete o.inv;return o}),Tm=(D.team||[]).map(x=>({...x}));
+  for(let i=0;i<12;i++)state.months[key(i,2027)]={clients:C.map(x=>({...x})),team:Tm.map(x=>({...x})),expenses:[]};saveLocal()}catch(e){console.warn(e)}}
 function loadLocal(){let m=null,t=null;try{m=JSON.parse(localStorage.getItem("pf-months-v2"));t=JSON.parse(localStorage.getItem("pf-todos-v2"))}catch(e){}state.months={...SEED_MONTHS,...(m||{})};state.todos=t||SEED_TODOS;
   try{if(m&&localStorage.getItem("pf-exp26b")!=="1"){const R=/^(acuity|music|calendar|metricool|google|adope|verifed|apple)$/i;for(const k of Object.keys(state.months)){if(!k.startsWith("2026-")||!state.months[k])continue;state.months[k]={...state.months[k],expenses:(state.months[k].expenses||[]).filter(x=>!R.test((x.name||"").trim()))}}localStorage.setItem("pf-months-v2",JSON.stringify(state.months))}localStorage.setItem("pf-exp26b","1")}catch(e){}}
 const $=s=>document.querySelector(s);
@@ -1089,8 +1092,8 @@ function drawAllTime(svg){
   M.forEach((m,k)=>g+=`<circle cx="${xx(k)}" cy="${yy(m.rev)}" r="6" fill="transparent"><title>${FULL[m.i]} ${m.y} · revenue ${money(m.rev)} </title></circle>`);
   svg.innerHTML=g;
   svg.querySelectorAll("[data-yr]").forEach(b=>b.addEventListener("click",()=>{state.year=+b.dataset.yr;state.sel=state.year===YEAR?curIdx:11;render();document.getElementById("year-kpis").scrollIntoView({behavior:"smooth",block:"start"})}));
-  const T2=f=>S.reduce((a,x)=>a+x[f],0);
-  const best=S.reduce((a,b)=>b.rev>a.rev?b:a,S[0]);
+  const SP=S.filter(x=>x.y<=YEAR),T2=f=>f==="out"?SP.reduce((a,x)=>{let o=0;for(let i=0;i<=lastIdx(x.y);i++)o+=stats(i,x.y).out;return a+o},0):SP.reduce((a,x)=>a+x[f],0);
+  const best=SP.reduce((a,b)=>b.rev>a.rev?b:a,SP[0]);
   $("#all-kpis").innerHTML=kpi("Revenue all time",money(T2("rev")))+kpi("Profit all time",money(T2("profit")),"acc")+kpi("Best year",`${best.y} · $${Math.round(best.rev/1000)}k`)+kpi("Outstanding",money(T2("out")),T2("out")?"bad":"");
 }
 
@@ -2748,7 +2751,7 @@ function render(){
   $("#home-month-sub").textContent=`${money(hs.got)} in · ${money(hs.out)} outstanding · ${money(hs.profit)} profit`;
   if(state.loaded){const h=$("#home-board");h.id="home-board";board(curIdx,h,YEAR)}
   // finances
-  const all=MONTHS.map((_,i)=>stats(i)),toDate=all.slice(0,lastIdx(state.year)+1),ytd=state.year<YEAR?"":" YTD";
+  const all=MONTHS.map((_,i)=>stats(i)),toDate=state.year>YEAR?all:all.slice(0,lastIdx(state.year)+1),ytd=state.year<YEAR?"":state.year>YEAR?" (projected)":" YTD";
   const tot=f=>toDate.reduce((s,x)=>s+x[f],0);
   $("#year-kpis").className="kpis k3";$("#year-kpis").innerHTML=kpi("Revenue"+ytd,money(tot("rev")),"acc")+kpi("Expenses"+ytd,money(tot("rev")-tot("profit")),"bad")+kpi("Profit"+ytd,money(tot("profit")),"good");
   $("#year-picker").innerHTML=YEARS.map(y=>`<button aria-pressed="${y===state.year}" data-year="${y}">${y}</button>`).join("");
@@ -2824,7 +2827,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&driveT){cl
     for(const f of [render,renderPipe,renderQs,renderLeads,renderSys,renderLearn,lrShow,renderCheck,renderPModal,renderYearly,renderHomeKpis])try{f()}catch(e){}
   }
   document.addEventListener("focusout",()=>setTimeout(()=>{if(pend){const d=pend;pend=null;apply(d)}},50));
-  const start=()=>{mark(S.offline?"Offline":"Synced",!S.offline);let first=true;S.listen(d=>{apply(d);mark("Synced",true);if(first){first=false;try{pfImport()}catch(e){console.warn(e)}try{pfInvMove()}catch(e){console.warn(e)}setTimeout(()=>driveCopy(true),3000)}},()=>mark("Offline",false))};
+  const start=()=>{mark(S.offline?"Offline":"Synced",!S.offline);let first=true;S.listen(d=>{apply(d);mark("Synced",true);if(first){first=false;try{seed2027();render()}catch(e){console.warn(e)}try{pfImport()}catch(e){console.warn(e)}try{pfInvMove()}catch(e){console.warn(e)}setTimeout(()=>driveCopy(true),3000)}},()=>mark("Offline",false))};
   (function wait(){state.loaded?start():setTimeout(wait,300)})();
 })();
 
@@ -2839,7 +2842,7 @@ render();
   if(!db){try{const pv=JSON.parse(localStorage.getItem("pf-pipe"));if(Array.isArray(pv)){state.pipe=pv;renderPipe()}}catch(e){}try{const qv=JSON.parse(localStorage.getItem("pf-qs"));if(qv&&Array.isArray(qv.groups)){state.qs=qv;renderQs()}}catch(e){}try{const zv=JSON.parse(localStorage.getItem("pf-leads"));if(Array.isArray(zv)){state.leads=zv;renderLeads()}}catch(e){}try{const sv=JSON.parse(localStorage.getItem("pf-sys"));if(Array.isArray(sv)){state.sys=sv;renderSys()}}catch(e){}try{const v=JSON.parse(localStorage.getItem("pf-learn"));if(Array.isArray(v))state.learn=v;const lk=JSON.parse(localStorage.getItem("pf-links"));if(Array.isArray(lk))state.links=lk}catch(e){}if(!state.learn.length)state.learn=learnDefaults();renderLearn();lrShow()}
   if(!db){try{state.priv=JSON.parse(localStorage.getItem("pf-priv"))||null}catch(e){}try{state.inv=JSON.parse(localStorage.getItem("pf-inv"))||null}catch(e){}try{state.check=JSON.parse(localStorage.getItem("pf-check"))||{}}catch(e){}try{const SEEDV="2026-10-16c",seed=state.yearly,yv=JSON.parse(localStorage.getItem("pf-yearly"));if(yv)state.yearly=yv;if(localStorage.getItem("pf-yearly-v")!==SEEDV){state.yearly={...(yv||{}),...seed};localStorage.setItem("pf-yearly",JSON.stringify(state.yearly));localStorage.setItem("pf-yearly-v",SEEDV)}}catch(e){}}
   if(!db){state.cmeta={};try{state.cmeta=JSON.parse(localStorage.getItem("pf-cmeta"))||state.cmeta}catch(e){}}
-  if(!db){loadLocal();state.loaded=true;render();return}
+  if(!db){loadLocal();if(!window.__pfSync)seed2027();state.loaded=true;render();return}
   let gotM=false,gotT=false;
   db.collection("months").onSnapshot(snap=>{
     const m={};snap.docs.forEach(d=>{m[d.id]=d.data()});state.months=m;gotM=true;state.loaded=gotM&&gotT;render();
